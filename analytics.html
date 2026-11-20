@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Result Analyze | Sandy - YOLO Posture Reports &amp; Qwen AI Coach</title>
+
+  <!-- Google Fonts: Rajdhani, Inter & Share Tech Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5 CSS & Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+  <!-- Sandy Unified Cyberpunk Night City Design System -->
+  <link rel="stylesheet" href="posture-glass.css" />
+
+  <style>
+    .timeframe-bar {
+      display: inline-flex;
+      background: rgba(7, 11, 22, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      padding: 4px;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .tf-btn {
+      border: none;
+      background: transparent;
+      color: #CBD5E1;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.8rem;
+      padding: 0.45rem 1rem;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .tf-btn:hover {
+      color: #F8FAFC;
+      background: rgba(0, 240, 255, 0.08);
+    }
+    .tf-btn.active {
+      background: #00F0FF;
+      color: #00131A;
+      font-weight: 700;
+      box-shadow: 0 0 18px rgba(0, 240, 255, 0.4);
+    }
+
+    /* Circular Back Score Ring */
+    .score-ring-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .score-ring-svg {
+      transform: rotate(-90deg);
+    }
+    .score-ring-track {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.09);
+    }
+    .score-ring-progress {
+      fill: none;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.75s cubic-bezier(0.22, 1, 0.36, 1), stroke 0.35s ease;
+    }
+    .score-ring-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    /* Rating Colors (Green = Good, Yellow = Average, Red = Bad) */
+    .rating-good { color: #00FF66 !important; }
+    .rating-avg  { color: #FFE600 !important; }
+    .rating-bad  { color: #FF2A6D !important; }
+
+    /* Trend Bar Chart */
+    .trend-chart-wrap {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 8px;
+      height: 195px;
+      padding: 24px 8px 8px;
+      background: rgba(7, 11, 22, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+    }
+    .trend-col {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      min-width: 24px;
+    }
+    .trend-bar-score {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+    .trend-bar {
+      width: 100%;
+      max-width: 34px;
+      border-radius: 8px 8px 4px 4px;
+      transition: height 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+      min-height: 8px;
+    }
+    .trend-bar-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.70rem;
+      color: #94A3B8;
+      white-space: nowrap;
+    }
+
+    /* Qwen AI Coach Chat Panel */
+    .ai-chat-feed {
+      height: 330px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 12px;
+      background: rgba(4, 7, 15, 0.85);
+      border: 1px solid rgba(0, 240, 255, 0.18);
+      border-radius: 14px;
+    }
+    .ai-msg {
+      padding: 10px 13px;
+      border-radius: 12px;
+      font-size: 0.84rem;
+      line-height: 1.55;
+      max-width: 92%;
+      white-space: pre-wrap;
+    }
+    .ai-msg-bot {
+      align-self: flex-start;
+      background: rgba(10, 15, 30, 0.92);
+      border: 1px solid rgba(0, 240, 255, 0.28);
+      color: #E2E8F0;
+    }
+    .ai-msg-user {
+      align-self: flex-end;
+      background: rgba(0, 240, 255, 0.15);
+      border: 1px solid rgba(0, 240, 255, 0.45);
+      color: #F8FAFC;
+    }
+    .quick-chip {
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      background: rgba(0, 240, 255, 0.08);
+      color: #CBD5E1;
+      border-radius: 999px;
+      padding: 0.28rem 0.72rem;
+      font-size: 0.73rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .quick-chip:hover {
+      background: rgba(0, 240, 255, 0.2);
+      color: #FFFFFF;
+      border-color: #00F0FF;
+    }
+  </style>
+</head>
+<body class="d-flex flex-column min-vh-100" style="background-color: #030508;">
+  <canvas id="particleRodCanvas" class="particle-rod-canvas" aria-hidden="true"></canvas>
+
+  <div class="page-layer d-flex flex-column min-vh-100 position-relative z-1">
+    <!-- =================================================================== -->
+    <!-- UNIFIED TOP NAVIGATION BAR                                          -->
+    <!-- =================================================================== -->
+    <header class="glass-nav py-2 px-3 px-lg-4 mb-4">
+      <div class="container-fluid d-flex align-items-center justify-content-between flex-wrap gap-3 py-1">
+        <a href="index.html" class="d-inline-flex align-items-center gap-3 text-decoration-none">
+          <span class="brand-mark">
+            <i class="bi bi-bar-chart-steps"></i>
+          </span>
+          <div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="fw-bold text-hi fs-5 font-display" style="letter-spacing: 0.05em;">Sandy</span>
+              <span class="flow-badge flow-badge-cyan font-mono">RESULT ANALYZE</span>
+            </div>
+            <div class="text-soft-80" style="font-size: 0.75rem;">YOLOv5 Back Score Reports &amp; Qwen3.6-35B AI Coach</div>
+          </div>
+        </a>
+
+        <nav class="d-flex align-items-center flex-wrap gap-2" aria-label="Primary Navigation">
+          <a href="index.html" class="btn-glass-subtle small py-1 px-3">
+            <i class="bi bi-house-door text-neon-cyan"></i>
+            <span>Home</span>
+          </a>
+          <a href="Interface.html" class="btn-glass-subtle small py-1 px-3">
+            <i class="bi bi-camera-video text-neon-cyan"></i>
+            <span>Live Monitor</span>
+          </a>
+          <a href="analytics.html" class="btn-glass-secondary small py-1 px-3" style="border-color: rgba(0, 240, 255, 0.65);">
+            <i class="bi bi-pie-chart-fill text-neon-cyan"></i>
+            <span>Result Analyze</span>
+          </a>
+          <a href="ai-chat.html" class="btn-glass-subtle small py-1 px-3">
+            <i class="bi bi-stars text-neon-cyan"></i>
+            <span>AI Coach</span>
+          </a>
+          <a href="example.html" class="btn-glass-subtle small py-1 px-3">
+            <i class="bi bi-activity text-neon-pink"></i>
+            <span>Biofeedback Lab</span>
+          </a>
+        </nav>
+
+        <div id="sandyNavAuthSlot" class="d-flex align-items-center gap-2">
+          <div id="navSignedOutGroup" class="d-flex align-items-center gap-2">
+            <a href="signin.html?next=analytics.html" class="btn-glass-secondary small py-1 px-3">
+              <i class="bi bi-box-arrow-in-right text-neon-cyan"></i>
+              <span>Sign In</span>
+            </a>
+            <a href="signup.html?next=analytics.html" class="btn-neon-primary small py-1 px-3">
+              <i class="bi bi-person-plus-fill"></i>
+              <span>Sign Up</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- =================================================================== -->
+    <!-- MAIN ANALYTICS & QWEN AI WORKSPACE                                  -->
+    <!-- =================================================================== -->
+    <main class="container-fluid px-3 px-lg-4 mb-5 flex-grow-1">
+      <!-- Top Controls: Timeframe Switcher + Data Source Indicator -->
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+        <div class="timeframe-bar" role="tablist" aria-label="Report Timeframe">
+          <button type="button" class="tf-btn active" data-tf="daily" onclick="switchTimeframe('daily')">Daily</button>
+          <button type="button" class="tf-btn" data-tf="weekly" onclick="switchTimeframe('weekly')">Weekly</button>
+          <button type="button" class="tf-btn" data-tf="monthly" onclick="switchTimeframe('monthly')">Monthly</button>
+          <button type="button" class="tf-btn" data-tf="annually" onclick="switchTimeframe('annually')">Annually</button>
+        </div>
+
+        <div class="d-flex align-items-center flex-wrap gap-2">
+          <span id="yoloDataSourceBadge" class="flow-badge flow-badge-cyan font-mono">
+            <i class="bi bi-cpu"></i>
+            <span>YOLO Telemetry Syncing...</span>
+          </span>
+          <button type="button" class="btn-glass-subtle small py-1 px-3" onclick="syncYoloAnalytics()">
+            <i class="bi bi-arrow-clockwise text-neon-cyan"></i>
+            <span>Sync YOLO Data</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <!-- LEFT COLUMN: Circular Back Score, Comparison & Trend Chart -->
+        <div class="col-xl-7 col-lg-7 d-flex flex-column gap-4">
+
+          <!-- 1. Average Back Score Circle & Period-over-Period Comparison -->
+          <div class="glass-card p-4">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+              <div>
+                <h4 class="fw-bold text-hi font-display mb-0" id="reportHeading">Daily Back Score Report</h4>
+                <div class="text-soft-80 small" id="reportSubheading">Comparing Today vs. Yesterday from YOLOv5 detections</div>
+              </div>
+              <div class="d-flex align-items-center gap-2 font-mono" style="font-size: 0.70rem;">
+                <span class="rating-good"><i class="bi bi-circle-fill me-1"></i>80+ Good</span>
+                <span class="rating-avg"><i class="bi bi-circle-fill me-1"></i>55–79 Avg</span>
+                <span class="rating-bad"><i class="bi bi-circle-fill me-1"></i>&lt;55 Bad</span>
+              </div>
+            </div>
+
+            <div class="row g-4 align-items-center">
+              <!-- Primary Circular Back Score Ring -->
+              <div class="col-md-5 text-center">
+                <div class="score-ring-wrap">
+                  <svg class="score-ring-svg" width="196" height="196" viewBox="0 0 196 196">
+                    <circle class="score-ring-track" cx="98" cy="98" r="82" stroke-width="14"></circle>
+                    <circle id="mainScoreArc" class="score-ring-progress" cx="98" cy="98" r="82" stroke-width="14" stroke="#00FF66" stroke-dasharray="515.22" stroke-dashoffset="100"></circle>
+                  </svg>
+                  <div class="score-ring-center">
+                    <div class="text-soft-80 font-mono" style="font-size: 0.68rem;" id="currentPeriodLabel">TODAY</div>
+                    <div id="mainScoreValue" class="display-4 fw-bold font-mono rating-good" style="line-height: 1.05;">86</div>
+                    <span id="mainScoreBadge" class="flow-badge flow-badge-good font-mono mt-1" style="font-size: 0.68rem;">GOOD</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Comparison Ring + Delta + YOLO Breakdown -->
+              <div class="col-md-7 d-flex flex-column gap-3">
+                <div class="glass-subpanel p-3 d-flex align-items-center justify-content-between flex-wrap gap-3">
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="score-ring-wrap">
+                      <svg class="score-ring-svg" width="84" height="84" viewBox="0 0 84 84">
+                        <circle class="score-ring-track" cx="42" cy="42" r="34" stroke-width="8"></circle>
+                        <circle id="prevScoreArc" class="score-ring-progress" cx="42" cy="42" r="34" stroke-width="8" stroke="#FFE600" stroke-dasharray="213.63" stroke-dashoffset="50"></circle>
+                      </svg>
+                      <div class="score-ring-center">
+                        <div id="prevScoreValue" class="fw-bold font-mono fs-5 rating-avg">78</div>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="text-soft-80 font-mono" style="font-size: 0.70rem;" id="prevPeriodLabel">PREVIOUS (YESTERDAY)</div>
+                      <div class="fw-bold text-hi small" id="comparisonHeadline">+8% Better Than Yesterday</div>
+                      <div class="text-soft-80" style="font-size: 0.74rem;" id="comparisonSubtext">Your spine alignment improved across recent YOLO checks.</div>
+                    </div>
+                  </div>
+                  <span id="deltaBadge" class="flow-badge flow-badge-good font-mono fs-6">+8%</span>
+                </div>
+
+                <!-- 3 YOLO Telemetry Metric Tiles -->
+                <div class="row g-2">
+                  <div class="col-4">
+                    <div class="glass-subpanel p-2 text-center">
+                      <div class="text-soft-80 font-mono" style="font-size: 0.66rem;">GOOD FRAMES</div>
+                      <div id="metricGoodFrames" class="fs-5 fw-bold font-mono rating-good mt-1">0</div>
+                    </div>
+                  </div>
+                  <div class="col-4">
+                    <div class="glass-subpanel p-2 text-center">
+                      <div class="text-soft-80 font-mono" style="font-size: 0.66rem;">SLOUCH ALERTS</div>
+                      <div id="metricSlouchEvents" class="fs-5 fw-bold font-mono rating-bad mt-1">0</div>
+                    </div>
+                  </div>
+                  <div class="col-4">
+                    <div class="glass-subpanel p-2 text-center">
+                      <div class="text-soft-80 font-mono" style="font-size: 0.66rem;">YOLO CONF</div>
+                      <div id="metricAvgConf" class="fs-5 fw-bold font-mono text-neon-cyan mt-1">94%</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Color-Coded Period Trend Chart -->
+          <div class="glass-card p-4">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+              <div>
+                <h5 class="fw-bold text-hi font-display mb-0" id="trendChartTitle">Day-by-Day Back Score Trend</h5>
+                <div class="text-soft-80 small">Each bar is color-coded by your average back score (Green = Good, Yellow = Average, Red = Bad)</div>
+              </div>
+              <span class="flow-badge flow-badge-neutral font-mono" id="trendRangeBadge">7 PERIODS</span>
+            </div>
+
+            <div class="trend-chart-wrap" id="trendChartContainer"></div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: Qwen3.6-35B-A3B-UD-Q4_K_M.gguf AI Report Analyzer -->
+        <div class="col-xl-5 col-lg-5">
+          <div class="glass-card h-100 d-flex flex-column p-4 gap-3">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <div class="d-flex align-items-center gap-2">
+                <span class="brand-emblem" style="width: 36px; height: 36px; border-radius: 10px;">
+                  <i class="bi bi-stars text-neon-cyan fs-5"></i>
+                </span>
+                <div>
+                  <h5 class="fw-bold text-hi font-display mb-0">Sandy AI Report Coach</h5>
+                  <div class="text-neon-cyan font-mono" style="font-size: 0.68rem;">Qwen3.6-35B-A3B-UD-Q4_K_M.gguf</div>
+                </div>
+              </div>
+              <button type="button" class="btn-neon-primary small py-1 px-3" id="btnAutoAnalyze" onclick="askQwenAboutReport('Give me a clear summary of my current posture report, compare it to the previous period, and recommend 3 practical improvements.')">
+                <i class="bi bi-magic me-1"></i>
+                <span>Analyze Report</span>
+              </button>
+            </div>
+
+            <!-- Quick Suggested Question Chips -->
+            <div class="d-flex flex-wrap gap-2">
+              <button type="button" class="quick-chip" onclick="askQwenAboutReport('Why did my back score change compared to the previous period?')">Why did my score change?</button>
+              <button type="button" class="quick-chip" onclick="askQwenAboutReport('What safe stretches fit my posture report and medical notes?')">Safe stretches for me</button>
+              <button type="button" class="quick-chip" onclick="askQwenAboutReport('How can I push my average back score above 90%?')">How to reach 90+?</button>
+              <button type="button" class="quick-chip" onclick="askQwenAboutReport('Explain my slouch alerts and desk ergonomics tips.')">Desk setup tips</button>
+            </div>
+
+            <!-- AI Chat Messages Feed -->
+            <div class="ai-chat-feed flex-grow-1" id="aiChatFeed">
+              <div class="ai-msg ai-msg-bot">
+                Hi! I'm your <strong>Sandy AI Coach</strong> powered by <code>Qwen3.6-35B-A3B-UD-Q4_K_M.gguf</code>.
+                Click <strong>Analyze Report</strong> or ask me anything about your Daily, Weekly, Monthly, or Annual YOLO back score!
+              </div>
+            </div>
+
+            <!-- Engine Status Line -->
+            <div class="d-flex justify-content-between align-items-center font-mono text-soft-80" style="font-size: 0.68rem;">
+              <span id="qwenEngineStatus">Ready • Connected to Backend Config</span>
+              <span id="qwenActiveTimeframe">Context: DAILY</span>
+            </div>
+
+            <!-- Ask Question Form -->
+            <form onsubmit="handleCustomQuestion(event)" class="d-flex gap-2">
+              <input type="text" id="aiQuestionInput" class="form-control glass-input small" placeholder="Ask about your posture report..." required />
+              <button type="submit" id="btnSendQuestion" class="btn-neon-primary small px-3">
+                <i class="bi bi-send-fill"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Firebase SDKs, Config, Motion Engine & Shared Sandy Nav -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="posture-motion.js"></script>
+  <script src="sandy-nav.js"></script>
+
+  <script>
+    let activeTimeframe = 'daily';
+    let fbDb = null;
+    let fbAuth = null;
+    let currentUser = null;
+    let yoloDailyRecords = {}; // { 'YYYY-MM-DD': { back_score, good_frames, bad_frames, slouch_events, avg_confidence } }
+    let currentReportState = {
+      timeframe: 'daily',
+      current_score: 86,
+      previous_score: 78,
+      delta: 8,
+      good_frames: 430,
+      bad_frames: 70,
+      slouch_events: 4,
+      avg_confidence: 94
+    };
+
+    function getScoreStyle(score) {
+      if (score >= 80) {
+        return { label: 'GOOD', color: '#00FF66', textClass: 'rating-good', badgeClass: 'flow-badge-good' };
+      }
+      if (score >= 55) {
+        return { label: 'AVERAGE', color: '#FFE600', textClass: 'rating-avg', badgeClass: 'flow-badge-yellow' };
+      }
+      return { label: 'BAD', color: '#FF2A6D', textClass: 'rating-bad', badgeClass: 'flow-badge-bad' };
+    }
+
+    function buildReportForTimeframe(tf) {
+      const today = new Date();
+      const dateKey = (d) => d.toISOString().slice(0, 10);
+      const liveDays = Object.keys(yoloDailyRecords).sort();
+      const hasLive = liveDays.length > 0;
+
+      // Baseline realistic sample fallback blended with real YOLO records so all 4 views are rich
+      const todayKey = dateKey(today);
+      const yest = new Date(today); yest.setDate(yest.getDate() - 1);
+      const yestKey = dateKey(yest);
+
+      const getDayData = (key, fallbackScore) => {
+        if (yoloDailyRecords[key]) return yoloDailyRecords[key];
+        const good = Math.round(fallbackScore * 5);
+        const bad = Math.round((100 - fallbackScore) * 5);
+        return {
+          back_score: fallbackScore,
+          good_frames: good,
+          bad_frames: bad,
+          slouch_events: Math.max(0, Math.round((100 - fallbackScore) / 6)),
+          avg_confidence: 93
+        };
+      };
+
+      if (tf === 'daily') {
+        const cur = getDayData(todayKey, 86);
+        const prev = getDayData(yestKey, 78);
+        const bars = [];
+        const fallbackScores = [72, 64, 81, 49, 76, 78, cur.back_score];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(today);
+          d.setDate(d.getDate() - i);
+          const k = dateKey(d);
+          const dayRec = getDayData(k, fallbackScores[6 - i]);
+          bars.push({
+            label: i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' }),
+            score: dayRec.back_score
+          });
+        }
+        return {
+          heading: 'Daily Back Score Report',
+          subheading: hasLive ? 'Live YOLOv5 detections: Today vs. Yesterday' : 'Preview & Live YOLO Sync: Today vs. Yesterday',
+          curLabel: 'TODAY',
+          prevLabel: 'PREVIOUS (YESTERDAY)',
+          trendTitle: 'Last 7 Days Back Score Comparison',
+          current: cur.back_score,
+          previous: prev.back_score,
+          good_frames: cur.good_frames,
+          bad_frames: cur.bad_frames,
+          slouch_events: cur.slouch_events,
+          avg_confidence: cur.avg_confidence || 94,
+          bars
+        };
+      }
+
+      if (tf === 'weekly') {
+        const thisWeekScores = [];
+        const lastWeekScores = [];
+        let goodSum = 0, badSum = 0, slouchSum = 0;
+        const bars = [];
+        const sampleThis = [79, 84, 72, 88, 91, 76, 85];
+        const sampleLast = [68, 74, 62, 71, 79, 70, 75];
+
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(today);
+          d.setDate(d.getDate() - i);
+          const rec = getDayData(dateKey(d), sampleThis[6 - i]);
+          thisWeekScores.push(rec.back_score);
+          goodSum += rec.good_frames;
+          badSum += rec.bad_frames;
+          slouchSum += rec.slouch_events;
+          bars.push({ label: d.toLocaleDateString('en-US', { weekday: 'short' }), score: rec.back_score });
+
+          const dPrev = new Date(today);
+          dPrev.setDate(dPrev.getDate() - (i + 7));
+          lastWeekScores.push(getDayData(dateKey(dPrev), sampleLast[6 - i]).back_score);
+        }
+        const curAvg = Math.round(thisWeekScores.reduce((a, b) => a + b, 0) / thisWeekScores.length);
+        const prevAvg = Math.round(lastWeekScores.reduce((a, b) => a + b, 0) / lastWeekScores.length);
+
+        return {
+          heading: 'Weekly Back Score Report',
+          subheading: 'Comparing This Week vs. Last Week average daily back score',
+          curLabel: 'THIS WEEK',
+          prevLabel: 'PREVIOUS (LAST WEEK)',
+          trendTitle: 'Weekly Daily Breakdown (7 Days)',
+          current: curAvg,
+          previous: prevAvg,
+          good_frames: goodSum,
+          bad_frames: badSum,
+          slouch_events: slouchSum,
+          avg_confidence: 94,
+          bars
+        };
+      }
+
+      if (tf === 'monthly') {
+        const todayScore = getDayData(todayKey, 84).back_score;
+        const bars = [
+          { label: 'Week 1', score: 66 },
+          { label: 'Week 2', score: 74 },
+          { label: 'Week 3', score: 82 },
+          { label: 'Week 4', score: todayScore }
+        ];
+        const curAvg = Math.round(bars.reduce((a, b) => a + b.score, 0) / bars.length);
+        return {
+          heading: 'Monthly Back Score Report',
+          subheading: 'Comparing This Month vs. Last Month average back score',
+          curLabel: 'THIS MONTH',
+          prevLabel: 'PREVIOUS (LAST MONTH)',
+          trendTitle: 'Monthly Week-by-Week Progress',
+          current: curAvg,
+          previous: 71,
+          good_frames: 9420,
+          bad_frames: 2480,
+          slouch_events: 48,
+          avg_confidence: 94,
+          bars
+        };
+      }
+
+      // Annually
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const scores = [52, 58, 63, 69, 74, 78, 80, 77, 83, 86, getDayData(todayKey, 88).back_score, 85];
+      const bars = months.map((m, i) => ({ label: m, score: scores[i] }));
+      const curAvg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+      return {
+        heading: 'Annual Back Score Report',
+        subheading: 'Comparing This Year vs. Last Year monthly back score averages',
+        curLabel: 'THIS YEAR',
+        prevLabel: 'PREVIOUS (LAST YEAR)',
+        trendTitle: '12-Month Annual Back Score Overview',
+        current: curAvg,
+        previous: 64,
+        good_frames: 112400,
+        bad_frames: 34200,
+        slouch_events: 512,
+        avg_confidence: 95,
+        bars
+      };
+    }
+
+    function renderReport(tf) {
+      activeTimeframe = tf;
+      document.querySelectorAll('.tf-btn').forEach(b => b.classList.toggle('active', b.dataset.tf === tf));
+      document.getElementById('qwenActiveTimeframe').textContent = `Context: ${tf.toUpperCase()}`;
+
+      const rep = buildReportForTimeframe(tf);
+      const delta = rep.current - rep.previous;
+      currentReportState = {
+        timeframe: tf,
+        current_score: rep.current,
+        previous_score: rep.previous,
+        delta,
+        good_frames: rep.good_frames,
+        bad_frames: rep.bad_frames,
+        slouch_events: rep.slouch_events,
+        avg_confidence: rep.avg_confidence
+      };
+
+      document.getElementById('reportHeading').textContent = rep.heading;
+      document.getElementById('reportSubheading').textContent = rep.subheading;
+      document.getElementById('currentPeriodLabel').textContent = rep.curLabel;
+      document.getElementById('prevPeriodLabel').textContent = rep.prevLabel;
+      document.getElementById('trendChartTitle').textContent = rep.trendTitle;
+      document.getElementById('trendRangeBadge').textContent = `${rep.bars.length} PERIODS`;
+
+      // Main Score Circle Ring (r = 82, circumference = 515.22)
+      const mainStyle = getScoreStyle(rep.current);
+      const mainArc = document.getElementById('mainScoreArc');
+      const mainCirc = 2 * Math.PI * 82;
+      mainArc.style.stroke = mainStyle.color;
+      mainArc.style.strokeDashoffset = mainCirc * (1 - rep.current / 100);
+
+      const mainVal = document.getElementById('mainScoreValue');
+      mainVal.textContent = rep.current;
+      mainVal.className = `display-4 fw-bold font-mono ${mainStyle.textClass}`;
+
+      const mainBadge = document.getElementById('mainScoreBadge');
+      mainBadge.textContent = mainStyle.label;
+      mainBadge.className = `flow-badge ${mainStyle.badgeClass} font-mono mt-1`;
+
+      // Previous Period Mini Circle Ring (r = 34, circumference = 213.63)
+      const prevStyle = getScoreStyle(rep.previous);
+      const prevArc = document.getElementById('prevScoreArc');
+      const prevCirc = 2 * Math.PI * 34;
+      prevArc.style.stroke = prevStyle.color;
+      prevArc.style.strokeDashoffset = prevCirc * (1 - rep.previous / 100);
+
+      const prevVal = document.getElementById('prevScoreValue');
+      prevVal.textContent = rep.previous;
+      prevVal.className = `fw-bold font-mono fs-5 ${prevStyle.textClass}`;
+
+      // Delta Comparison Badge
+      const deltaBadge = document.getElementById('deltaBadge');
+      const compHead = document.getElementById('comparisonHeadline');
+      if (delta > 0) {
+        deltaBadge.textContent = `+${delta}%`;
+        deltaBadge.className = 'flow-badge flow-badge-good font-mono fs-6';
+        compHead.textContent = `+${delta}% Higher Than Previous Period`;
+      } else if (delta < 0) {
+        deltaBadge.textContent = `${delta}%`;
+        deltaBadge.className = 'flow-badge flow-badge-bad font-mono fs-6';
+        compHead.textContent = `${delta}% Lower Than Previous Period`;
+      } else {
+        deltaBadge.textContent = '0%';
+        deltaBadge.className = 'flow-badge flow-badge-cyan font-mono fs-6';
+        compHead.textContent = 'Steady Compared to Previous Period';
+      }
+
+      document.getElementById('metricGoodFrames').textContent = rep.good_frames.toLocaleString();
+      document.getElementById('metricSlouchEvents').textContent = rep.slouch_events.toLocaleString();
+      document.getElementById('metricAvgConf').textContent = `${rep.avg_confidence}%`;
+
+      // Render Color-Coded Trend Bars
+      const container = document.getElementById('trendChartContainer');
+      container.innerHTML = rep.bars.map(item => {
+        const st = getScoreStyle(item.score);
+        const hPct = Math.max(10, Math.min(100, item.score));
+        return `
+          <div class="trend-col" title="${item.label}: ${item.score}/100 (${st.label})">
+            <div class="trend-bar-score" style="color:${st.color};">${item.score}</div>
+            <div class="trend-bar" style="height:${hPct}%; background:linear-gradient(180deg, ${st.color}, ${st.color}44); box-shadow:0 0 12px ${st.color}44;"></div>
+            <div class="trend-bar-label">${item.label}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function switchTimeframe(tf) {
+      renderReport(tf);
+    }
+
+    // Sync real YOLO posture telemetry from Colab /api/analytics + Firebase Firestore
+    async function syncYoloAnalytics() {
+      const badge = document.getElementById('yoloDataSourceBadge');
+      let syncedCount = 0;
+
+      // 1. Pull from Colab YOLOv5 Gateway (/api/analytics)
+      const colabUrl = (window.BACKEND_CONFIG && window.BACKEND_CONFIG.colabApiUrl || '').trim().replace(/\/$/, '');
+      if (colabUrl && !colabUrl.includes('xxxx.ngrok')) {
+        try {
+          const resp = await fetch(`${colabUrl}/api/analytics`, {
+            headers: { 'ngrok-skip-browser-warning': 'true' }
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            if (Array.isArray(data.days)) {
+              data.days.forEach(d => {
+                if (d.date) {
+                  yoloDailyRecords[d.date] = d;
+                  syncedCount++;
+                }
+              });
+            }
+            if (data.qwen_ready) {
+              document.getElementById('qwenEngineStatus').textContent = `Live: ${data.qwen_model}`;
+            }
+          }
+        } catch (_) {}
+      }
+
+      // 2. Pull from Firebase Firestore (posture_analytics/{uid}/daily + posture_logs)
+      if (fbDb && currentUser) {
+        try {
+          const snap = await fbDb.collection('posture_analytics').doc(currentUser.uid).collection('daily').get();
+          snap.forEach(doc => {
+            yoloDailyRecords[doc.id] = doc.data();
+            syncedCount++;
+          });
+        } catch (_) {}
+      }
+
+      badge.innerHTML = syncedCount > 0
+        ? `<i class="bi bi-check-circle-fill text-neon-good"></i><span>Live YOLO Data (${syncedCount} days)</span>`
+        : `<i class="bi bi-cpu text-neon-cyan"></i><span>YOLO Sync Ready (Demo Baseline)</span>`;
+
+      renderReport(activeTimeframe);
+    }
+
+    // Append Message to Qwen AI Chat
+    function appendChatMsg(text, isUser = false) {
+      const feed = document.getElementById('aiChatFeed');
+      const div = document.createElement('div');
+      div.className = `ai-msg ${isUser ? 'ai-msg-user' : 'ai-msg-bot'}`;
+      div.textContent = text;
+      feed.appendChild(div);
+      feed.scrollTop = feed.scrollHeight;
+      return div;
+    }
+
+    // Ask Qwen3.6-35B-A3B-UD-Q4_K_M.gguf about the active report
+    async function askQwenAboutReport(questionText) {
+      if (!questionText || !questionText.trim()) return;
+      appendChatMsg(questionText, true);
+      const thinkingBubble = appendChatMsg('Analyzing your YOLO report with Qwen3.6-35B-A3B...', false);
+
+      let profile = {};
+      try {
+        profile = JSON.parse(localStorage.getItem('sandy_user_profile') || '{}');
+      } catch (_) {}
+
+      const medNotes = [
+        Array.isArray(profile.medicalConditions) ? profile.medicalConditions.join(', ') : '',
+        profile.medicalNotes || ''
+      ].filter(Boolean).join(' — ') || 'None reported';
+
+      const payload = {
+        ...currentReportState,
+        user_goal: profile.goal || 'Build Upright Sitting Habit',
+        medical_notes: medNotes,
+        question: questionText
+      };
+
+      const qwenEndpoint = (
+        (window.BACKEND_CONFIG && window.BACKEND_CONFIG.qwenApiUrl) ||
+        (window.BACKEND_CONFIG && window.BACKEND_CONFIG.colabApiUrl) ||
+        ''
+      ).trim().replace(/\/$/, '');
+      if (qwenEndpoint && !qwenEndpoint.includes('xxxx.ngrok')) {
+        try {
+          const resp = await fetch(`${qwenEndpoint}/api/ai-analyze`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'ngrok-skip-browser-warning': 'true'
+            },
+            body: JSON.stringify(payload)
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            thinkingBubble.textContent = data.answer || 'Analysis complete.';
+            if (data.engine) {
+              document.getElementById('qwenEngineStatus').textContent = `Engine: ${data.engine}`;
+            }
+            return;
+          }
+        } catch (_) {}
+      }
+
+      // Offline-safe intelligent fallback if Colab ngrok tunnel is currently asleep
+      const st = getScoreStyle(payload.current_score);
+      const trend = payload.delta >= 0 ? `up +${payload.delta}%` : `down ${payload.delta}%`;
+      thinkingBubble.textContent =
+        `[${payload.timeframe.toUpperCase()} REPORT — ${payload.current_score}/100 (${st.label})]\n\n` +
+        `• Trend: Your average back score is ${trend} compared to the previous period (${payload.previous_score}/100).\n` +
+        `• YOLO Data: ${payload.good_frames} good frames vs ${payload.bad_frames} slouch frames (${payload.slouch_events} alerts).\n` +
+        `• Personalized Advice (${payload.user_goal}): Keep your screen at eye level, relax your shoulders, and take a 1-minute reset break every 45 minutes.\n` +
+        `• Note: Start your Colab server with Qwen3.6-35B-A3B-UD-Q4_K_M.gguf to receive live LLM-generated responses.`;
+      document.getElementById('qwenEngineStatus').textContent = 'Offline Fallback (Start Colab Qwen3.6 server for live LLM)';
+    }
+
+    function handleCustomQuestion(e) {
+      e.preventDefault();
+      const input = document.getElementById('aiQuestionInput');
+      const q = input.value.trim();
+      if (!q) return;
+      input.value = '';
+      askQwenAboutReport(q);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.PostureMotion && typeof window.PostureMotion.initParticleRodBackground === 'function') {
+        window.PostureMotion.initParticleRodBackground();
+      }
+      if (!firebase.apps.length && window.DEFAULT_FIREBASE_CONFIG) {
+        firebase.initializeApp(window.DEFAULT_FIREBASE_CONFIG);
+      }
+      fbAuth = firebase.auth();
+      fbDb = firebase.firestore();
+
+      renderReport('daily');
+
+      // Auto-wake Qwen3.6-35B & YOLOv5 analytics server in background
+      const qwenEp = ((window.BACKEND_CONFIG && window.BACKEND_CONFIG.qwenApiUrl) || (window.BACKEND_CONFIG && window.BACKEND_CONFIG.colabApiUrl) || '').trim().replace(/\/$/, '');
+      if (qwenEp && !qwenEp.includes('xxxx.ngrok')) {
+        fetch(`${qwenEp}/api/wakeup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+          body: JSON.stringify({ service: 'qwen' })
+        }).catch(() => {});
+      }
+
+      fbAuth.onAuthStateChanged((user) => {
+        currentUser = user;
+        syncYoloAnalytics();
+      });
+    });
+  </script>
+</body>
+</html>

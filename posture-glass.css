@@ -1,0 +1,1282 @@
+﻿/* ==========================================================================
+   PostureAI — Cyberpunk Night City & Arasaka / Trauma Team Biomonitor UI
+   --------------------------------------------------------------------------
+   Standardized Night City Palette:
+     - Deep Void Black Canvas: #030508
+     - Frosted Dark Glass Panels: rgba(10, 15, 30, 0.65)
+     - Electric Cyan: #00F0FF
+     - Cyberpunk Pink / Magenta: #FF007F
+     - Hazard Yellow / Amber: #FFE600
+     - Glitch Red: #FF2A6D
+   Typography Hierarchy:
+     - Display / Tactical Headers / Buttons: 'Rajdhani' (600, 700)
+     - Body Copy / Inputs: 'Inter' (400, 500, 600)
+     - Biomonitor HUD / Badges / Readouts: 'Share Tech Mono' (400)
+   Layout Precision:
+     - Zero text clipping or overlapping badges (display: inline-flex; position: static)
+   ========================================================================== */
+
+:root {
+  /* 1. Standardized Night City Void & Glass Surfaces */
+  --void-base: #030508;
+  --void-elevated: #060A13;
+  --glass-panel-bg: rgba(10, 15, 30, 0.65);
+  --glass-subpanel-bg: rgba(7, 11, 22, 0.76);
+  --glass-stage-bg: rgba(4, 7, 15, 0.88);
+  --input-surface: rgba(5, 8, 17, 0.90);
+
+  /* 2. Restricted Night City Neon Palette */
+  --cyber-cyan: #00F0FF;
+  --cyber-magenta: #FF007F;
+  --cyber-yellow: #FFE600;
+  --cyber-crimson: #FF2A6D;
+
+  /* 3. iOS Liquid Glass Structural Borders & Radii */
+  --ios-glass-border: rgba(255, 255, 255, 0.12);
+  --panel-subtle-border: rgba(255, 255, 255, 0.12);
+  --ios-radius-lg: 20px;
+  --ios-radius-md: 14px;
+
+  /* 4. Tech / Monospace Font Stack */
+  --font-display: 'Rajdhani', system-ui, sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Share Tech Mono', 'Consolas', monospace;
+
+  /* 5. High-Contrast Accessible Text Hierarchy */
+  --text-100: #F8FAFC;
+  --text-88: #E2E8F0;
+  --text-80: #CBD5E1;
+
+  /* 6. Night City Status Badge Tokens */
+  --badge-cyan-fg: #00F0FF;
+  --badge-cyan-bg: rgba(0, 240, 255, 0.11);
+  --badge-cyan-bd: rgba(0, 240, 255, 0.46);
+
+  --badge-magenta-fg: #FF4DA6;
+  --badge-magenta-bg: rgba(255, 0, 127, 0.13);
+  --badge-magenta-bd: rgba(255, 0, 127, 0.48);
+
+  --badge-yellow-fg: #FFE600;
+  --badge-yellow-bg: rgba(255, 230, 0, 0.12);
+  --badge-yellow-bd: rgba(255, 230, 0, 0.50);
+
+  --badge-crimson-fg: #FF2A6D;
+  --badge-crimson-bg: rgba(255, 42, 109, 0.16);
+  --badge-crimson-bd: rgba(255, 42, 109, 0.58);
+
+  --badge-neutral-fg: #E2E8F0;
+  --badge-neutral-bg: rgba(10, 15, 30, 0.78);
+  --badge-neutral-bd: rgba(0, 240, 255, 0.20);
+
+  /* Motion Curves */
+  --spring-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --smooth-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--void-base);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0, 240, 255, 0.045), transparent 65%),
+    radial-gradient(ellipse 65% 45% at 85% 105%, rgba(255, 0, 127, 0.035), transparent 65%);
+  background-attachment: fixed;
+  color: var(--text-88);
+  font-family: var(--font-sans);
+  font-size: 0.96rem;
+  font-weight: 400;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+/* ==========================================================================
+   Typography Hierarchy Overhaul
+   ========================================================================== */
+h1, h2, h3, h4, h5, h6,
+.font-display {
+  font-family: var(--font-display);
+  color: var(--text-100);
+  font-weight: 700;
+  line-height: 1.18;
+  letter-spacing: 0.02em;
+}
+
+h1 { font-weight: 700; letter-spacing: 0.01em; }
+h2 { font-size: clamp(1.75rem, 3vw, 2.35rem); letter-spacing: 0.02em; }
+h3 { font-size: clamp(1.45rem, 2.4vw, 1.9rem); }
+h4 { font-size: 1.35rem; }
+h5 { font-size: 1.2rem; }
+h6 { font-size: 1.08rem; letter-spacing: 0.025em; }
+
+p {
+  line-height: 1.68;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  color: var(--cyber-cyan);
+  background: rgba(0, 240, 255, 0.08);
+  padding: 0.1rem 0.38rem;
+  border-radius: 5px;
+  border: 1px solid rgba(0, 240, 255, 0.18);
+}
+
+.font-mono {
+  font-family: var(--font-mono) !important;
+  letter-spacing: 0.03em;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* High-Legibility Color Utilities */
+.text-hi {
+  color: var(--text-100) !important;
+}
+
+.text-body-88 {
+  color: var(--text-88) !important;
+}
+
+.text-soft-80 {
+  color: var(--text-80) !important;
+}
+
+.text-neon-cyan,
+.text-neon-good {
+  color: var(--cyber-cyan) !important;
+}
+
+.text-neon-magenta {
+  color: var(--cyber-magenta) !important;
+}
+
+.text-neon-amber,
+.text-neon-yellow {
+  color: var(--cyber-yellow) !important;
+}
+
+.text-neon-crimson {
+  color: var(--cyber-crimson) !important;
+}
+
+.text-gradient-cyber {
+  background: linear-gradient(125deg, #00F0FF 0%, #FF007F 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ==========================================================================
+   Interactive Particle Rod & Cybernetic Canvas Background
+   ========================================================================== */
+#particleRodCanvas,
+#ambientBgCanvas,
+#netlifyFluidCanvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  display: block;
+}
+
+.page-layer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ==========================================================================
+   iOS Liquid Glassmorphism + Night City Dark Panels
+   ========================================================================== */
+.glass-nav {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+  background: rgba(6, 10, 20, 0.72);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 12px 36px rgba(0, 0, 0, 0.72);
+}
+
+.glass-card {
+  --glow-x: 50%;
+  --glow-y: 0%;
+  --glow-alpha: 0;
+  border-radius: var(--ios-radius-lg);
+  border: 1px solid var(--panel-subtle-border);
+  background:
+    radial-gradient(
+      360px circle at var(--glow-x) var(--glow-y),
+      rgba(0, 240, 255, calc(var(--glow-alpha) * 0.065)),
+      rgba(255, 0, 127, calc(var(--glow-alpha) * 0.04)) 45%,
+      transparent 72%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.07) 0%,
+      rgba(255, 255, 255, 0.0) 28%
+    ),
+    var(--glass-panel-bg);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 22px 52px -14px rgba(0, 0, 0, 0.86);
+  transition:
+    transform 0.42s var(--spring-ease),
+    box-shadow 0.32s var(--smooth-ease),
+    border-color 0.30s ease;
+}
+
+.glass-card-interactive:hover {
+  transform: translateY(-4px) scale(1.012);
+  border-color: rgba(0, 240, 255, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(0, 240, 255, 0.28),
+    0 26px 56px -12px rgba(0, 0, 0, 0.92),
+    0 0 24px rgba(0, 240, 255, 0.14);
+}
+
+.glass-subpanel {
+  border-radius: var(--ios-radius-md);
+  background: var(--glass-subpanel-bg);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: border-color 0.25s ease, transform 0.32s var(--spring-ease);
+}
+
+.glass-subpanel:hover {
+  border-color: rgba(0, 240, 255, 0.28);
+}
+
+.glass-header-bar {
+  padding: 1rem 1.35rem;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.14);
+  background: rgba(5, 8, 16, 0.50);
+  border-top-left-radius: var(--ios-radius-lg);
+  border-top-right-radius: var(--ios-radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+/* ==========================================================================
+   Biomonitor Telemetry & Accurate Slouch Warning HUD Banner
+   - Calm Cyan Nominal (-90° to +15°: lying_down & sitting_good — ZERO warnings)
+   - Hazard Yellow Caution (+16° to +35°: caution_slouch)
+   - Glitch Red Critical Alert (+36° to +90°: sitting_bad)
+   ========================================================================== */
+.cyber-hud-banner,
+.cyber-hud-banner.hud-state-calm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.26rem;
+  position: static;
+  padding: 0.56rem 0.85rem;
+  border-radius: 12px;
+  font-family: var(--font-mono);
+  background: rgba(6, 16, 28, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(0, 240, 255, 0.24);
+  border-left: 3px solid var(--cyber-cyan);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  animation: none;
+  transition: border-color 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease;
+}
+
+.cyber-hud-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-family: var(--font-display);
+  font-size: 0.70rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cyber-cyan);
+}
+
+.cyber-hud-main-text {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  line-height: 1.38;
+  letter-spacing: 0.02em;
+  color: var(--text-88);
+  word-break: break-word;
+  animation: none;
+}
+
+.cyber-hud-code {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  position: static;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.67rem;
+  letter-spacing: 0.05em;
+  padding: 0.08rem 0.48rem;
+  border-radius: 6px;
+  color: var(--cyber-cyan);
+  background: rgba(0, 240, 255, 0.10);
+  border: 1px solid rgba(0, 240, 255, 0.40);
+}
+
+/* Neutral Idle State (Before Monitor Starts) */
+.cyber-hud-banner.hud-state-idle {
+  border-color: rgba(148, 163, 184, 0.26);
+  border-left-color: #94A3B8;
+}
+
+.cyber-hud-banner.hud-state-idle .cyber-hud-top-row {
+  color: #CBD5E1;
+}
+
+.cyber-hud-banner.hud-state-idle .cyber-hud-code {
+  color: #CBD5E1;
+  background: rgba(148, 163, 184, 0.12);
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+/* Caution Slouch State (+16° to +35° ONLY — Hazard Yellow) */
+.cyber-hud-banner.hud-state-warn {
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgba(255, 230, 0, 0.06) 0px,
+      rgba(255, 230, 0, 0.06) 8px,
+      transparent 8px,
+      transparent 16px
+    ),
+    rgba(20, 16, 6, 0.88);
+  border-color: rgba(255, 230, 0, 0.65);
+  border-left: 4px solid var(--cyber-yellow);
+  animation: hudBorderFlashMed 1.6s ease-in-out infinite;
+}
+
+.cyber-hud-banner.hud-state-warn .cyber-hud-top-row {
+  color: var(--cyber-yellow);
+}
+
+.cyber-hud-banner.hud-state-warn .cyber-hud-main-text {
+  color: var(--cyber-yellow);
+}
+
+.cyber-hud-banner.hud-state-warn .cyber-hud-code {
+  color: #030508;
+  background: var(--cyber-yellow);
+  border-color: var(--cyber-yellow);
+  font-weight: 700;
+}
+
+/* Severe Forward Slouch State (+36° to +90° ONLY — Glitch Red + Anime Glitch) */
+.cyber-hud-banner.hud-state-critical {
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgba(255, 42, 109, 0.14) 0px,
+      rgba(255, 42, 109, 0.14) 8px,
+      rgba(255, 230, 0, 0.07) 8px,
+      rgba(255, 230, 0, 0.07) 16px
+    ),
+    rgba(22, 5, 13, 0.94);
+  border-color: var(--cyber-crimson);
+  border-left: 4px solid var(--cyber-crimson);
+  border-right: 2px solid var(--cyber-yellow);
+  animation: hudBorderFlashOverdrive 0.65s steps(2, end) infinite;
+}
+
+.cyber-hud-banner.hud-state-critical .cyber-hud-top-row {
+  color: var(--cyber-yellow);
+}
+
+.cyber-hud-banner.hud-state-critical .cyber-hud-main-text {
+  color: var(--cyber-crimson);
+  font-weight: 600;
+  animation: hudTextGlitchOverdrive 0.72s steps(3, end) infinite;
+}
+
+.cyber-hud-banner.hud-state-critical .cyber-hud-code {
+  color: #FFFFFF;
+  background: var(--cyber-crimson);
+  border-color: var(--cyber-yellow);
+  font-weight: 700;
+}
+
+@keyframes hudBorderFlashMed {
+  0%, 100% {
+    border-color: rgba(255, 230, 0, 0.52);
+    box-shadow: inset 0 0 14px rgba(255, 230, 0, 0.10), 0 0 12px rgba(255, 230, 0, 0.16);
+  }
+  50% {
+    border-color: rgba(255, 230, 0, 0.88);
+    box-shadow: inset 0 0 18px rgba(255, 230, 0, 0.18), 0 0 20px rgba(255, 230, 0, 0.28);
+  }
+}
+
+@keyframes hudBorderFlashOverdrive {
+  0%, 100% {
+    border-color: var(--cyber-crimson);
+    box-shadow:
+      inset 0 0 24px rgba(255, 42, 109, 0.25),
+      0 0 22px rgba(255, 42, 109, 0.48);
+  }
+  50% {
+    border-color: var(--cyber-yellow);
+    box-shadow:
+      inset 0 0 28px rgba(255, 230, 0, 0.22),
+      0 0 30px rgba(255, 42, 109, 0.65);
+  }
+}
+
+@keyframes hudTextGlitchOverdrive {
+  0%, 100% {
+    text-shadow:
+      -1.6px 0 var(--cyber-cyan),
+      1.6px 0 var(--cyber-yellow),
+      0 0 10px rgba(255, 42, 109, 0.55);
+    transform: translateX(0);
+  }
+  33% {
+    text-shadow:
+      2.2px 0 var(--cyber-cyan),
+      -2.2px 0 var(--cyber-crimson),
+      0 0 16px rgba(255, 42, 109, 0.80);
+    transform: translateX(-1.2px) skewX(-2.5deg);
+  }
+  66% {
+    color: var(--cyber-yellow);
+    text-shadow:
+      -2.0px 0 var(--cyber-crimson),
+      2.0px 0 var(--cyber-magenta),
+      0 0 16px rgba(255, 230, 0, 0.70);
+    transform: translateX(1.2px) skewX(2deg);
+  }
+}
+
+/* ==========================================================================
+   Biofeedback Alert Card Aura States (Hazard Yellow & Glitch Red)
+   ========================================================================== */
+.glass-card.alert-warn-aura {
+  border-color: rgba(255, 230, 0, 0.52);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 230, 0, 0.24),
+    0 22px 52px -12px rgba(0, 0, 0, 0.88),
+    0 0 26px rgba(255, 230, 0, 0.18);
+}
+
+.glass-card.alert-bad-aura {
+  border-color: rgba(255, 42, 109, 0.74);
+  animation: cyberCrimsonAura 1.7s ease-in-out infinite;
+}
+
+@keyframes cyberCrimsonAura {
+  0%, 100% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 42, 109, 0.28),
+      0 22px 52px -12px rgba(0, 0, 0, 0.90),
+      0 0 24px rgba(255, 42, 109, 0.28);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 230, 0, 0.34),
+      0 24px 56px -10px rgba(0, 0, 0, 0.94),
+      0 0 44px rgba(255, 42, 109, 0.52);
+  }
+}
+
+/* ==========================================================================
+   Strict Normal-Flow Status Badges & Dynamic Tags (Zero Overlap / Zero Shift)
+   ========================================================================== */
+.flow-badge {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  position: static !important;
+  padding: 0.34rem 0.82rem;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: 0.03em;
+  vertical-align: middle;
+  font-variant-numeric: tabular-nums;
+  transition: background-color 0.22s ease, border-color 0.22s ease, color 0.22s ease, box-shadow 0.22s ease;
+}
+
+.posture-state-pill {
+  min-width: 148px;
+}
+
+.degree-readout-pill {
+  min-width: 176px;
+}
+
+.conf-readout-pill {
+  min-width: 152px;
+}
+
+.flow-badge-cyan,
+.flow-badge-good {
+  color: var(--badge-cyan-fg);
+  background: var(--badge-cyan-bg);
+  border: 1px solid var(--badge-cyan-bd);
+  animation: pulseCyanGlow 3.2s ease-in-out infinite;
+}
+
+.flow-badge-magenta {
+  color: var(--badge-magenta-fg);
+  background: var(--badge-magenta-bg);
+  border: 1px solid var(--badge-magenta-bd);
+}
+
+.flow-badge-amber,
+.flow-badge-yellow {
+  color: var(--badge-yellow-fg);
+  background: var(--badge-yellow-bg);
+  border: 1px solid var(--badge-yellow-bd);
+  box-shadow: 0 0 14px rgba(255, 230, 0, 0.14);
+}
+
+.flow-badge-bad {
+  color: var(--badge-crimson-fg);
+  background: var(--badge-crimson-bg);
+  border: 1px solid var(--badge-crimson-bd);
+  animation: pulseCrimsonGlow 1.4s ease-in-out infinite;
+}
+
+.flow-badge-neutral {
+  color: var(--badge-neutral-fg);
+  background: var(--badge-neutral-bg);
+  border: 1px solid var(--badge-neutral-bd);
+}
+
+@keyframes pulseCyanGlow {
+  0%, 100% { box-shadow: 0 0 0 rgba(0, 240, 255, 0); }
+  50% { box-shadow: 0 0 14px rgba(0, 240, 255, 0.26); }
+}
+
+@keyframes pulseCrimsonGlow {
+  0%, 100% { box-shadow: 0 0 6px rgba(255, 42, 109, 0.24); }
+  50% { box-shadow: 0 0 20px rgba(255, 42, 109, 0.54); }
+}
+
+/* Status Indicator Dots */
+.status-dot {
+  display: inline-block;
+  position: static;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot-cyan,
+.status-dot-good {
+  background: var(--cyber-cyan);
+  box-shadow: 0 0 10px var(--cyber-cyan);
+}
+
+.status-dot-magenta {
+  background: var(--cyber-magenta);
+  box-shadow: 0 0 10px var(--cyber-magenta);
+}
+
+.status-dot-amber,
+.status-dot-yellow {
+  background: var(--cyber-yellow);
+  box-shadow: 0 0 10px var(--cyber-yellow);
+}
+
+.status-dot-bad {
+  background: var(--cyber-crimson);
+  box-shadow: 0 0 12px var(--cyber-crimson);
+}
+
+.status-dot-idle {
+  background: #94A3B8;
+}
+
+/* ==========================================================================
+   Cyberpunk Pink (#FF007F) Focal Buttons & Electric Cyan (#00F0FF) Controls
+   ========================================================================== */
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(10, 15, 30, 0.92);
+  border: 1.5px solid var(--cyber-cyan);
+  color: var(--cyber-cyan);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  box-shadow:
+    inset 0 0 12px rgba(0, 240, 255, 0.22),
+    0 0 18px rgba(0, 240, 255, 0.24),
+    2px 2px 0 var(--cyber-magenta);
+  flex-shrink: 0;
+}
+
+.btn-neon-primary,
+.btn-cyber-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  position: static;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #FF007F 0%, #D6006B 100%);
+  color: #FFFFFF !important;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 12px;
+  padding: 0.62rem 1.35rem;
+  text-decoration: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 8px 24px rgba(255, 0, 127, 0.40);
+  transition: transform 0.34s var(--spring-ease), box-shadow 0.24s ease, filter 0.24s ease;
+  cursor: pointer;
+}
+
+.btn-neon-primary.small,
+.btn-cyber-primary.small {
+  font-size: 0.88rem;
+}
+
+.btn-neon-primary:hover:not(:disabled),
+.btn-cyber-primary:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.025);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 12px 30px rgba(255, 0, 127, 0.62),
+    0 0 16px rgba(0, 240, 255, 0.25);
+  filter: brightness(1.08);
+  color: #FFFFFF !important;
+}
+
+.btn-neon-primary:disabled,
+.btn-cyber-primary:disabled {
+  opacity: 0.60;
+  cursor: not-allowed;
+}
+
+.btn-neon-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  position: static;
+  font-family: var(--font-display);
+  font-size: 0.96rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #FF2A6D 0%, #C8144E 100%);
+  color: #FFFFFF !important;
+  border: 1px solid rgba(255, 230, 0, 0.35);
+  border-radius: 12px;
+  padding: 0.62rem 1.35rem;
+  text-decoration: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 8px 24px rgba(255, 42, 109, 0.45);
+  transition: transform 0.34s var(--spring-ease), box-shadow 0.24s ease;
+  cursor: pointer;
+}
+
+.btn-neon-danger.small {
+  font-size: 0.88rem;
+}
+
+.btn-neon-danger:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 12px 30px rgba(255, 42, 109, 0.65);
+  color: #FFFFFF !important;
+}
+
+.btn-glass-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  position: static;
+  font-family: var(--font-display);
+  font-size: 0.98rem;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+  background: rgba(10, 15, 30, 0.72);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgba(0, 240, 255, 0.42);
+  color: var(--text-100) !important;
+  border-radius: 12px;
+  padding: 0.60rem 1.18rem;
+  text-decoration: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition: transform 0.34s var(--spring-ease), border-color 0.22s ease, box-shadow 0.22s ease, background-color 0.22s ease;
+  cursor: pointer;
+}
+
+.btn-glass-secondary.small {
+  font-size: 0.86rem;
+}
+
+.btn-glass-secondary:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.02);
+  background-color: rgba(0, 240, 255, 0.10);
+  border-color: var(--cyber-cyan);
+  box-shadow:
+    inset 0 1px 0 rgba(0, 240, 255, 0.30),
+    0 0 18px rgba(0, 240, 255, 0.24);
+  color: var(--cyber-cyan) !important;
+}
+
+.btn-glass-subtle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  position: static;
+  font-family: var(--font-sans);
+  font-size: 0.84rem;
+  font-weight: 500;
+  background: rgba(10, 15, 30, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-88) !important;
+  border-radius: 10px;
+  padding: 0.45rem 0.90rem;
+  text-decoration: none;
+  transition: transform 0.28s var(--spring-ease), border-color 0.2s ease, color 0.2s ease;
+  cursor: pointer;
+}
+
+.btn-glass-subtle:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(0, 240, 255, 0.42);
+  color: var(--cyber-cyan) !important;
+}
+
+.nav-link-glass {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  position: static;
+  font-family: var(--font-display);
+  font-size: 0.96rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-88);
+  text-decoration: none;
+  padding: 0.42rem 0.85rem;
+  border-radius: 10px;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.nav-link-glass:hover,
+.nav-link-glass.active {
+  color: var(--cyber-cyan);
+  background: rgba(0, 240, 255, 0.08);
+}
+
+/* ==========================================================================
+   Clean Structured Section System (Eliminating Visual Clutter)
+   ========================================================================== */
+.dashboard-section {
+  position: relative;
+  padding-top: 1.5rem;
+  padding-bottom: 2rem;
+}
+
+.section-divider {
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 240, 255, 0.25) 20%,
+    rgba(255, 0, 127, 0.20) 80%,
+    transparent 100%
+  );
+  margin: 3.5rem 0 2.5rem;
+  border: none;
+}
+
+.section-title {
+  font-size: clamp(1.4rem, 2.2vw, 1.85rem);
+  font-weight: 700;
+  color: var(--text-100);
+  letter-spacing: -0.015em;
+  margin-bottom: 0.35rem;
+}
+
+.section-desc {
+  font-size: 0.88rem;
+  color: var(--text-60);
+  max-width: 760px;
+  margin-bottom: 0;
+}
+
+/* ==========================================================================
+   Bidirectional -90° to +90° Ergonomic Posture Slider
+   (-90° to +15° Electric Cyan | +16° to +35° Hazard Yellow | +36° to +90° Glitch Red)
+   ========================================================================== */
+.posture-degree-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 24px;
+  background: transparent;
+  outline: none;
+  cursor: pointer;
+  display: block;
+  margin: 4px 0;
+  padding: 0;
+}
+
+.posture-degree-range::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    #00F0FF 0%,
+    #00F0FF 58.33%,
+    #FFE600 58.33%,
+    #FFE600 69.44%,
+    #FF2A6D 69.44%,
+    #FF2A6D 100%
+  );
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.20), inset 0 1px 3px rgba(0, 0, 0, 0.85);
+  border: none;
+}
+
+.posture-degree-range::-moz-range-track {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    #00F0FF 0%,
+    #00F0FF 58.33%,
+    #FFE600 58.33%,
+    #FFE600 69.44%,
+    #FF2A6D 69.44%,
+    #FF2A6D 100%
+  );
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.20), inset 0 1px 3px rgba(0, 0, 0, 0.85);
+  border: none;
+}
+
+.slider-zone-track-strip {
+  width: 100%;
+  height: 19px;
+  border-radius: 6px;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.4px;
+  font-weight: 700;
+}
+.zone-strip-segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  padding: 0 4px;
+}
+.zone-strip-segment.strip-cyan {
+  background: rgba(0, 240, 255, 0.12);
+  border-top: 2px solid #00F0FF;
+  color: #00F0FF;
+}
+.zone-strip-segment.strip-yellow {
+  background: rgba(255, 230, 0, 0.12);
+  border-top: 2px solid #FFE600;
+  color: #FFE600;
+}
+.zone-strip-segment.strip-red {
+  background: rgba(255, 42, 109, 0.14);
+  border-top: 2px solid #FF2A6D;
+  color: #FF2A6D;
+}
+
+/* Dedicated Vector Posture Symbols */
+.posture-sym {
+  width: 1.12em;
+  height: 1.12em;
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+.posture-sym.sym-lg { width: 1.7rem; height: 1.7rem; }
+.posture-sym.sym-md { width: 1.25rem; height: 1.25rem; }
+.sym-cyan   { color: #00F0FF; }
+.sym-yellow { color: #FFE600; }
+.sym-red    { color: #FF2A6D; }
+.posture-sym.is-glitch {
+  animation: symGlitchJitter 0.42s steps(3, end) infinite;
+}
+@keyframes symGlitchJitter {
+  0%, 100% { transform: translate(0, 0); }
+  33% { transform: translate(-1.2px, 0.6px) skewX(-7deg); }
+  66% { transform: translate(1.2px, -0.6px) skewX(7deg); }
+}
+
+.posture-degree-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #030508;
+  border: 3px solid var(--thumb-accent, #00F0FF);
+  box-shadow: 0 0 14px var(--thumb-accent, #00F0FF), 0 2px 6px rgba(0, 0, 0, 0.85);
+  cursor: grab;
+  margin-top: -7px; /* (10px track - 24px thumb) / 2 = -7px vertically centers circle on slider track */
+  transition: transform 0.25s var(--spring-ease), border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.posture-degree-range::-webkit-slider-thumb:hover,
+.posture-degree-range::-webkit-slider-thumb:active {
+  transform: scale(1.22);
+  cursor: grabbing;
+}
+
+.posture-degree-range::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #030508;
+  border: 3px solid var(--thumb-accent, #00F0FF);
+  box-shadow: 0 0 14px var(--thumb-accent, #00F0FF);
+  cursor: grab;
+  border: none;
+}
+
+/* ==========================================================================
+   Glassmorphic Inputs, Switches & Modals
+   ========================================================================== */
+.glass-input {
+  background: var(--input-surface) !important;
+  border: 1px solid rgba(0, 240, 255, 0.18) !important;
+  color: var(--text-100) !important;
+  border-radius: 12px;
+  padding: 0.68rem 0.96rem;
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.55);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.glass-input::placeholder {
+  color: rgba(203, 213, 225, 0.45);
+}
+
+.glass-input:focus {
+  border-color: var(--cyber-cyan) !important;
+  box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.18) !important;
+  outline: none;
+}
+
+.input-group .glass-input {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.btn-eye-glass {
+  background: var(--input-surface);
+  border: 1px solid rgba(0, 240, 255, 0.18);
+  border-left: none;
+  color: var(--text-80);
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+  padding: 0 0.95rem;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.btn-eye-glass:hover {
+  color: var(--cyber-cyan);
+  background: rgba(0, 240, 255, 0.08);
+}
+
+.form-range::-webkit-slider-thumb {
+  background: var(--cyber-cyan);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.85);
+}
+
+.form-check-input {
+  background-color: #030508;
+  border-color: rgba(0, 240, 255, 0.35);
+}
+
+.form-check-input:checked {
+  background-color: var(--cyber-cyan);
+  border-color: var(--cyber-cyan);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.55);
+}
+
+/* Accessible Glass Alerts */
+.glass-alert {
+  border-radius: 12px;
+  padding: 0.68rem 1rem;
+  font-size: 0.86rem;
+  font-weight: 500;
+  backdrop-filter: blur(16px);
+}
+
+.glass-alert-danger {
+  background: var(--badge-crimson-bg);
+  border: 1px solid var(--badge-crimson-bd);
+  color: #FF6B99;
+}
+
+.glass-alert-warning {
+  background: var(--badge-yellow-bg);
+  border: 1px solid var(--badge-yellow-bd);
+  color: var(--badge-yellow-fg);
+}
+
+.glass-alert-success {
+  background: var(--badge-cyan-bg);
+  border: 1px solid var(--badge-cyan-bd);
+  color: var(--badge-cyan-fg);
+}
+
+.glass-alert-info {
+  background: var(--badge-magenta-bg);
+  border: 1px solid var(--badge-magenta-bd);
+  color: var(--badge-magenta-fg);
+}
+
+/* Dark Cyberpunk Modal */
+.modal-content.glass-modal {
+  border-radius: var(--ios-radius-lg);
+  background: rgba(8, 12, 24, 0.92);
+  backdrop-filter: blur(24px) saturate(165%);
+  -webkit-backdrop-filter: blur(24px) saturate(165%);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  color: var(--text-100);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 30px 70px rgba(0, 0, 0, 0.92);
+}
+
+.modal-content.glass-modal .modal-header,
+.modal-content.glass-modal .modal-footer {
+  border-color: rgba(0, 240, 255, 0.14);
+}
+
+/* ==========================================================================
+   Full-Body Human Visualizer & 740 Hz Biofeedback Stages
+   ========================================================================== */
+.skeleton-stage {
+  border-radius: var(--ios-radius-md);
+  background: var(--glass-stage-bg);
+  border: 1px solid rgba(0, 240, 255, 0.24);
+  box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.68);
+  padding: 0.70rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.skeleton-stage.stage-warn {
+  border-color: rgba(255, 230, 0, 0.52);
+  box-shadow:
+    inset 0 0 28px rgba(0, 0, 0, 0.68),
+    0 0 16px rgba(255, 230, 0, 0.14);
+}
+
+.skeleton-stage.stage-bad {
+  border-color: rgba(255, 42, 109, 0.68);
+  box-shadow:
+    inset 0 0 32px rgba(255, 42, 109, 0.12),
+    0 0 22px rgba(255, 42, 109, 0.20);
+}
+
+.waveform-box {
+  border-radius: 14px;
+  background: rgba(5, 8, 16, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  padding: 0.62rem 0.85rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.waveform-box.wave-bad-active {
+  border-color: rgba(255, 42, 109, 0.62);
+  box-shadow: 0 0 20px rgba(255, 42, 109, 0.22);
+}
+
+/* Physical Hardware LED Indicators */
+.hw-led {
+  display: inline-block;
+  position: static;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  transition: all 0.25s ease;
+}
+
+.hw-led-good {
+  background: var(--cyber-cyan);
+  box-shadow: 0 0 12px var(--cyber-cyan);
+}
+
+.hw-led-amber {
+  background: var(--cyber-yellow);
+  box-shadow: 0 0 12px var(--cyber-yellow);
+}
+
+.hw-led-bad {
+  background: var(--cyber-crimson);
+  box-shadow: 0 0 14px var(--cyber-crimson);
+  animation: ledPulseBad 0.75s ease-in-out infinite alternate;
+}
+
+@keyframes ledPulseBad {
+  0% { transform: scale(0.92); opacity: 0.65; }
+  100% { transform: scale(1.20); opacity: 1; }
+}
+
+/* Table & Snapshot Thumbnails */
+.table-glass {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--text-88);
+  --bs-table-border-color: rgba(0, 240, 255, 0.10);
+}
+
+.snapshot-thumb {
+  width: 58px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  transition: transform 0.3s var(--spring-ease), border-color 0.22s ease;
+}
+
+.snapshot-thumb:hover {
+  transform: scale(1.10);
+  border-color: var(--cyber-magenta);
+}
+
+/* ==========================================================================
+   Squarespace Minimalist Layout & ST7789 HUD Display Overlay
+   ========================================================================== */
+.squarespace-auth-shell {
+  max-width: 440px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.squarespace-auth-shell-wide {
+  max-width: 460px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.squarespace-card {
+  background: rgba(8, 12, 24, 0.78);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(0, 240, 255, 0.20);
+  border-radius: 20px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 24px 60px rgba(0, 0, 0, 0.85),
+    0 0 32px rgba(0, 240, 255, 0.08);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.squarespace-card:hover {
+  border-color: rgba(0, 240, 255, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 30px 70px rgba(0, 0, 0, 0.90),
+    0 0 38px rgba(0, 240, 255, 0.14);
+}
+
+/* ST7789 240x240 LCD Hardware Display Simulation */
+.st7789-display-frame {
+  position: relative;
+  background: #020408;
+  border: 2px solid rgba(0, 240, 255, 0.40);
+  border-radius: 14px;
+  box-shadow:
+    inset 0 0 24px rgba(0, 0, 0, 0.95),
+    0 0 18px rgba(0, 240, 255, 0.18);
+  overflow: hidden;
+  font-family: var(--font-mono);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.st7789-scanlines {
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%,
+    rgba(0, 0, 0, 0.30) 50%
+  );
+  background-size: 100% 4px;
+}
+
+.st7789-state-optimal {
+  border-color: #00F0FF !important;
+  box-shadow: inset 0 0 18px rgba(0, 240, 255, 0.22), 0 0 20px rgba(0, 240, 255, 0.28) !important;
+}
+
+.st7789-state-caution {
+  border-color: #FFE600 !important;
+  box-shadow: inset 0 0 18px rgba(255, 230, 0, 0.22), 0 0 20px rgba(255, 230, 0, 0.28) !important;
+}
+
+.st7789-state-critical {
+  border-color: #FF2A6D !important;
+  box-shadow: inset 0 0 24px rgba(255, 42, 109, 0.35), 0 0 26px rgba(255, 42, 109, 0.40) !important;
+  animation: st7789RedFlicker 1.4s ease-in-out infinite;
+}
+
+@keyframes st7789RedFlicker {
+  0%, 100% { border-color: #FF2A6D; }
+  50% { border-color: #FFE600; }
+}

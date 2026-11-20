@@ -1,0 +1,2807 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sandy | Live Cloud &amp; Hardware Ergonomics Monitor</title>
+
+  <!-- Google Fonts: Rajdhani, Inter & Share Tech Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5 CSS & Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+  <!-- Sandy Unified Cyberpunk Night City Design System -->
+  <link rel="stylesheet" href="posture-glass.css" />
+
+  <style>
+    /* Video & Bounding-Box Stage (Strictly contains media layers; all text HUDs sit in normal flow outside) */
+    .camera-stage {
+      position: relative;
+      background: #030508;
+      border: 1px solid rgba(0, 240, 255, 0.22);
+      border-radius: 16px;
+      overflow: hidden;
+      aspect-ratio: 4 / 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 290px;
+      box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.72);
+    }
+
+    #espStream, #webcam, #overlay {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    #overlay {
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    .radar-emblem {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 1.1rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10, 15, 30, 0.85);
+      border: 1px solid rgba(0, 240, 255, 0.44);
+      color: var(--cyber-cyan);
+      box-shadow: 0 0 24px rgba(0, 240, 255, 0.16);
+      animation: pulseCyanGlow 3s ease-in-out infinite;
+    }
+
+    .metric-tile {
+      background: rgba(7, 11, 22, 0.78);
+      backdrop-filter: blur(18px) saturate(160%);
+      -webkit-backdrop-filter: blur(18px) saturate(160%);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      border-radius: 14px;
+      padding: 0.85rem 0.6rem;
+      text-align: center;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      transition: transform 0.32s var(--spring-ease), border-color 0.22s ease, box-shadow 0.22s ease;
+    }
+
+    .metric-tile:hover {
+      transform: translateY(-3px) scale(1.02);
+      border-color: rgba(0, 240, 255, 0.45);
+      box-shadow: 0 0 18px rgba(0, 240, 255, 0.14);
+    }
+
+    .node-chip-btn {
+      cursor: pointer;
+    }
+
+    .node-chip-btn:hover {
+      border-color: rgba(0, 240, 255, 0.56);
+      background: rgba(0, 240, 255, 0.12);
+    }
+
+    .verification-summary-line {
+      min-height: 2.35rem;
+      display: flex;
+      align-items: center;
+    }
+
+    /* Minimize Mode & Expandable Glass Header Trigger */
+    body.minimized-mode .page-layer {
+      display: none !important;
+    }
+
+    .glass-expand-trigger {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.22s ease;
+    }
+
+    .glass-expand-trigger:hover {
+      background: rgba(0, 240, 255, 0.06);
+    }
+
+    .expand-chevron-icon {
+      transition: transform 0.25s var(--smooth-ease);
+    }
+
+    .glass-expand-trigger[aria-expanded="true"] .expand-chevron-icon {
+      transform: rotate(180deg);
+    }
+
+    .cyber-mini-widget {
+      position: fixed;
+      bottom: 22px;
+      right: 22px;
+      width: 340px;
+      z-index: 9999;
+      border: 1px solid rgba(0, 240, 255, 0.48);
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.82), 0 0 28px rgba(0, 240, 255, 0.18);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="particleRodCanvas" class="particle-rod-canvas" aria-hidden="true"></canvas>
+
+  <!-- Custom Posture-Mode Vector Symbol Sprite (strictly no emojis) -->
+  <svg width="0" height="0" style="position: absolute; overflow: hidden;" aria-hidden="true" focusable="false">
+    <defs>
+      <!-- lying_down: horizontal recline bar (Electric Cyan) -->
+      <symbol id="sym-lying" viewBox="0 0 24 24">
+        <circle cx="4.6" cy="11" r="2.4" fill="currentColor"/>
+        <rect x="8" y="9" width="13.5" height="4" rx="2" fill="currentColor"/>
+        <path d="M2 16.5 H22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M5 19.5 V16.5 M19 19.5 V16.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+        <path d="M15 3.6 H18.2 L15 6.4 H18.2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.75"/>
+      </symbol>
+
+      <!-- sitting_good: vertical spine alignment pillar (Electric Cyan) -->
+      <symbol id="sym-upright" viewBox="0 0 24 24">
+        <path d="M12 2 V22" fill="none" stroke="currentColor" stroke-width="1" opacity="0.55"/>
+        <rect x="9" y="2.8" width="6" height="3.4" rx="1.2" fill="currentColor"/>
+        <rect x="9" y="7.7" width="6" height="3.4" rx="1.2" fill="currentColor"/>
+        <rect x="9" y="12.6" width="6" height="3.4" rx="1.2" fill="currentColor"/>
+        <rect x="9" y="17.5" width="6" height="3.4" rx="1.2" fill="currentColor"/>
+        <path d="M5.6 3.4 H4 V20.6 H5.6 M18.4 3.4 H20 V20.6 H18.4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+      </symbol>
+
+      <!-- sitting_caution: angled drift warning triangle (Hazard Yellow) -->
+      <symbol id="sym-caution" viewBox="0 0 24 24">
+        <path d="M0.8 9.5 H3.6 M0.6 12.6 H2.8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity="0.65"/>
+        <g transform="rotate(14 12 13)">
+          <path d="M12 2.8 L21.6 19.6 H2.4 Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>
+          <path d="M13.1 8.4 L11.7 13.9" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/>
+          <circle cx="11.2" cy="16.7" r="1.35" fill="currentColor"/>
+        </g>
+      </symbol>
+
+      <!-- sitting_bad: cyberpsychosis glitch lightning bolt (Glitch Red) -->
+      <symbol id="sym-glitch" viewBox="0 0 24 24">
+        <path d="M14.5 2 L5 13.5 H11 L9.5 22 L19 10 H13 Z" fill="none" stroke="#00F0FF" stroke-width="0.9" stroke-linejoin="round" transform="translate(-1.4 0.6)" opacity="0.65"/>
+        <path d="M14.5 2 L5 13.5 H11 L9.5 22 L19 10 H13 Z" fill="currentColor"/>
+        <rect x="1.2" y="7" width="5" height="1.6" fill="currentColor" opacity="0.8"/>
+        <rect x="17.2" y="15.4" width="5.6" height="1.6" fill="currentColor" opacity="0.8"/>
+        <rect x="2.4" y="18.2" width="3" height="1.2" fill="currentColor" opacity="0.5"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <div class="page-layer">
+    <!-- =================================================================== -->
+    <!-- STICKY GLASSMORPHIC HEADER                                          -->
+    <!-- =================================================================== -->
+    <header class="glass-nav py-2 px-3 px-lg-4 mb-4">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 py-1">
+        <!-- Brand (Links back to Start Page) -->
+        <a href="index.html" class="d-inline-flex align-items-center gap-3 text-decoration-none" title="Back to Sandy Start Page">
+          <span class="brand-mark">
+            <i class="bi bi-person-bounding-box"></i>
+          </span>
+          <div>
+            <div class="d-flex align-items-center flex-wrap gap-2">
+              <span class="fw-bold text-hi fs-5">Sandy</span>
+              <span class="flow-badge flow-badge-cyan font-mono">VISION GATEWAY</span>
+            </div>
+            <div class="text-soft-80" style="font-size: 0.76rem;">ESP32-S3 &bull; Firebase Cloud Relay &bull; YOLOv5 AI</div>
+          </div>
+        </a>
+
+        <!-- Normal-Flow Status Chips, Separated Auth & Primary Monitor Controls -->
+        <div class="d-flex align-items-center flex-wrap gap-2">
+          <span class="flow-badge flow-badge-amber font-mono" id="espNodePill">
+            <span class="status-dot status-dot-amber" id="espDot"></span>
+            <span class="text-body-88">ESP32:</span>
+            <span id="espNavStatus" class="fw-bold text-neon-amber">Standby</span>
+          </span>
+
+          <button type="button" class="flow-badge flow-badge-neutral font-mono node-chip-btn" onclick="openSettingsModal('gateway')" title="Configure Google Colab or FastAPI Gateway URL">
+            <span class="status-dot status-dot-idle" id="colabDot"></span>
+            <span class="text-body-88">YOLOv5:</span>
+            <span id="colabNavStatus" class="fw-bold text-hi">Not Set</span>
+          </button>
+
+          <button type="button" class="flow-badge flow-badge-good font-mono node-chip-btn" onclick="openSettingsModal('firebase')" title="Configure Firebase Connection">
+            <span class="status-dot status-dot-good" id="firebaseDot"></span>
+            <span class="text-body-88">Firebase:</span>
+            <span id="firebaseNavStatus" class="fw-bold text-neon-good">Connected</span>
+          </button>
+
+          <!-- Hidden compatibility spans -->
+          <span id="espBadge" class="d-none">ESP32: Waiting</span>
+          <span id="connectionBadge" class="d-none">Gateway Offline</span>
+
+          <!-- Restructured Primary Navigation Tabs -->
+          <nav class="d-flex align-items-center flex-wrap gap-2" aria-label="Primary Navigation">
+            <a href="index.html" class="btn-glass-subtle small py-1 px-3">
+              <i class="bi bi-house-door text-neon-cyan"></i>
+              <span>Home</span>
+            </a>
+            <a href="Interface.html" class="btn-glass-secondary small py-1 px-3" style="border-color: rgba(0, 240, 255, 0.65);">
+              <i class="bi bi-camera-video text-neon-cyan"></i>
+              <span>Live Monitor</span>
+            </a>
+            <a href="analytics.html" class="btn-glass-subtle small py-1 px-3">
+              <i class="bi bi-pie-chart-fill text-neon-cyan"></i>
+              <span>Result Analyze</span>
+            </a>
+            <a href="ai-chat.html" class="btn-glass-subtle small py-1 px-3">
+              <i class="bi bi-stars text-neon-cyan"></i>
+              <span>AI Coach</span>
+            </a>
+            <a href="example.html" class="btn-glass-subtle small py-1 px-3">
+              <i class="bi bi-activity text-neon-pink"></i>
+              <span>Biofeedback Lab</span>
+            </a>
+          </nav>
+
+          <!-- Divided Auth Controls: Separate Sign In & Sign Up when Signed Out -->
+          <div id="authSection" class="d-flex align-items-center flex-wrap gap-2">
+            <div id="navSignedOutGroup" class="d-flex align-items-center flex-wrap gap-2">
+              <a href="signin.html?next=Interface.html" class="btn-glass-secondary small py-1 px-3">
+                <i class="bi bi-box-arrow-in-right text-neon-cyan"></i>
+                <span>Sign In</span>
+              </a>
+              <a href="signup.html?next=Interface.html" class="btn-neon-primary small py-1 px-3">
+                <i class="bi bi-person-plus-fill"></i>
+                <span>Sign Up</span>
+              </a>
+            </div>
+            <button type="button" class="btn-glass-secondary small py-1 px-3 d-none" id="btnOpenAuth" data-bs-toggle="modal" data-bs-target="#authModal">
+              <i class="bi bi-person-check-fill text-neon-good"></i>
+              <span id="authBtnLabel">Account</span>
+            </button>
+          </div>
+
+          <!-- Settings Trigger -->
+          <button type="button" class="btn-glass-subtle small" onclick="openSettingsModal('gateway')" title="Gateway, Bluetooth &amp; Firebase Settings">
+            <i class="bi bi-gear"></i>
+            <span class="d-none d-sm-inline">Settings</span>
+          </button>
+
+          <!-- Minimize Interface Trigger -->
+          <button type="button" class="btn-glass-subtle small" onclick="toggleMinimizeMode(true)" title="Minimize into floating Cyberpunk mini widget">
+            <i class="bi bi-pip text-neon-cyan"></i>
+            <span class="d-none d-sm-inline">Minimize</span>
+          </button>
+
+          <!-- Primary Start/Stop Monitor Button -->
+          <button type="button" class="btn-neon-primary small py-2 px-3" id="btnToggle" onclick="toggleStream()">
+            <i class="bi bi-play-circle-fill"></i>
+            <span>Start Monitor</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- =================================================================== -->
+    <!-- MAIN DASHBOARD GRID                                                 -->
+    <!-- =================================================================== -->
+    <main class="container-fluid px-3 px-lg-4 mb-5 flex-grow-1">
+      <div class="row g-4">
+
+        <!-- Left Column: Live Vision Stream (Zero Absolute Text Badges!) -->
+        <div class="col-xl-7 col-lg-7">
+          <div class="glass-card h-100 d-flex flex-column">
+            <!-- Header Bar -->
+            <div class="glass-header-bar">
+              <div class="d-flex align-items-center flex-wrap gap-2">
+                <i class="bi bi-camera-video text-neon-cyan fs-5"></i>
+                <span class="fw-bold text-hi">Live Vision Stream</span>
+                <span class="flow-badge flow-badge-cyan font-mono" id="sourceIndicator">ESP32-S3 N16R8 Gateway</span>
+              </div>
+
+              <div class="d-flex align-items-center flex-wrap gap-2">
+                <button type="button" class="btn-glass-subtle small py-1 px-2" onclick="captureCloudSnapshot(true)" id="btnSnapshot" title="Upload current frame + bounding box to Firebase Storage &amp; Firestore">
+                  <i class="bi bi-cloud-arrow-up-fill text-neon-cyan"></i>
+                  <span>Save Snapshot</span>
+                </button>
+                <button type="button" class="btn-glass-secondary small py-1 px-2" onclick="simulateEspFrame()" title="Simulate incoming ESP32-S3 frame &amp; spring-physics posture inference">
+                  <i class="bi bi-lightning-charge-fill text-neon-amber"></i>
+                  <span>Demo Frame</span>
+                </button>
+                <button type="button" class="btn-glass-subtle small py-1 px-2" onclick="openSettingsModal('gateway')" title="Stream configuration" aria-label="Stream configuration">
+                  <i class="bi bi-sliders"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Body: Top Normal-Flow Telemetry Bar + Camera Stage + Bottom Telemetry Bar -->
+            <div class="p-3 d-flex flex-column flex-grow-1 gap-2">
+
+              <!-- Top Normal-Flow HUD Strip (display: inline-flex; position: static) -->
+              <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                  <span class="flow-badge flow-badge-neutral font-mono" id="livePill">
+                    <span class="status-dot status-dot-idle" id="liveDot"></span>
+                    <span id="liveStatusText" class="fw-bold">STANDBY</span>
+                  </span>
+                  <span class="flow-badge flow-badge-neutral font-mono">
+                    <i class="bi bi-aspect-ratio text-neon-cyan"></i>
+                    <span id="resText">--</span>
+                  </span>
+                </div>
+
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                  <span class="flow-badge flow-badge-neutral font-mono">
+                    <i class="bi bi-speedometer2 text-neon-cyan"></i>
+                    <span>FPS: <strong id="fpsText" class="text-hi">--</strong></span>
+                  </span>
+                  <span class="flow-badge flow-badge-neutral font-mono">
+                    <i class="bi bi-stopwatch text-neon-amber"></i>
+                    <span>Latency: <strong id="latencyText" class="text-hi">-- ms</strong></span>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Camera Media Stage -->
+              <div class="camera-stage flex-grow-1">
+                <img id="espStream" alt="ESP32-CAM Live Stream" class="d-none" crossorigin="anonymous" />
+                <video id="webcam" class="d-none" autoplay playsinline muted></video>
+                <canvas id="overlay"></canvas>
+
+                <!-- Centered Standby Placeholder (Never overlapped by HUD pills) -->
+                <div id="streamPlaceholder" class="text-center p-4" style="max-width: 440px;">
+                  <div class="radar-emblem">
+                    <i class="bi bi-camera-video fs-2"></i>
+                  </div>
+                  <h5 class="fw-bold text-hi mb-2">Vision Gateway Standby</h5>
+                  <p class="text-body-88 small mb-4" style="line-height: 1.65;">
+                    Stream live frames from your <strong class="text-hi">ESP32-S3</strong> via USB-C, Hotspot, Firebase Relay, or YOLOv5 Gateway—or click <strong class="text-neon-cyan">Demo Frame</strong> to preview biofeedback immediately.
+                  </p>
+                  <div class="d-flex justify-content-center flex-wrap gap-2">
+                    <button type="button" class="btn-neon-primary small py-2 px-3" onclick="toggleStream()">
+                      <i class="bi bi-play-fill"></i>
+                      <span>Start Monitoring</span>
+                    </button>
+                    <button type="button" class="btn-glass-secondary small py-2 px-3" onclick="simulateEspFrame()">
+                      <i class="bi bi-lightning-charge text-neon-amber"></i>
+                      <span>Try Demo Preview</span>
+                    </button>
+                    <button type="button" class="btn-glass-subtle small py-2 px-3" onclick="openSettingsModal('gateway')">
+                      <i class="bi bi-gear"></i>
+                      <span>Endpoints</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+                            <!-- Live ST7789 HUD Hardware Display Simulation Overlay (Squarespace Minimalist & iOS Glassmorphic) -->
+              <div class="mt-2">
+                <div id="st7789DisplayFrame" class="st7789-display-frame st7789-state-optimal p-3">
+                  <div class="st7789-scanlines position-absolute inset-0 w-100 h-100 pointer-events-none"></div>
+                  <div class="position-relative z-1">
+                    <div class="d-flex align-items-center justify-content-between mb-2 pb-1 border-bottom border-secondary border-opacity-25 font-mono">
+                      <div class="d-flex align-items-center gap-2">
+                        <span id="st7789StateLed" class="status-dot status-dot-good" style="width: 8px; height: 8px; background: #00F0FF; box-shadow: 0 0 10px #00F0FF;"></span>
+                        <span class="text-hi fw-bold" style="font-size: 0.78rem; letter-spacing: 0.05em;">ST7789 SPI HUD // 240x240 LCD</span>
+                      </div>
+                      <span id="st7789StatusText" class="fw-bold" style="font-size: 0.75rem; color: #00F0FF;">NOMINAL // OPTIMAL</span>
+                    </div>
+
+                    <div class="row g-2 align-items-center">
+                      <div class="col-sm-5 text-center py-1">
+                        <div class="text-soft-80 small mb-0" style="font-size: 0.68rem;">SPINE INCLINE</div>
+                        <div id="st7789AngleText" class="display-6 fw-bold tabular-nums font-mono" style="color: #00F0FF; line-height: 1.1;">0&deg;</div>
+                        <div class="text-soft-80 font-mono" style="font-size: 0.65rem;">-90&deg; &larr; 0&deg; &rarr; +90&deg;</div>
+                      </div>
+
+                      <div class="col-sm-7">
+                        <div class="p-2 rounded" style="background: rgba(3, 5, 8, 0.75); border: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.72rem;">
+                          <div class="d-flex justify-content-between mb-1">
+                            <span class="text-soft-80">PIEZO BUZZER:</span>
+                            <strong id="st7789PiezoText" style="color: #00F0FF;">QUIET</strong>
+                          </div>
+                          <div class="d-flex justify-content-between mb-1">
+                            <span class="text-soft-80">HUD REFRESH:</span>
+                            <strong id="st7789FpsText" class="text-hi">60 FPS</strong>
+                          </div>
+                          <div class="d-flex justify-content-between mb-1">
+                            <span class="text-soft-80">EDGE LATENCY:</span>
+                            <strong id="st7789LatText" class="text-neon-amber">&lt;15ms</strong>
+                          </div>
+                          <div class="d-flex justify-content-between">
+                            <span class="text-soft-80">HARDWARE LINK:</span>
+                            <strong class="text-neon-cyan">ESP32-S3 SPI</strong>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bottom Normal-Flow Status Strip -->
+              <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-1 small font-mono text-soft-80" style="font-size: 0.76rem;">
+                <span class="d-inline-flex align-items-center gap-1">
+                  <i class="bi bi-clock-history text-neon-cyan"></i>
+                  <span>Last frame: <strong id="lastFrameTimeText" class="text-hi">Never</strong></span>
+                </span>
+                <span id="cloudSyncIndicator" class="d-inline-flex align-items-center gap-1">
+                  <i class="bi bi-cloud-check text-neon-good"></i>
+                  <span>Firebase Cloud Ready</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Live Skeletal Twin, 740 Hz Biofeedback, Telemetry & Controls -->
+        <div class="col-xl-5 col-lg-5 d-flex flex-column gap-4">
+
+          <!-- 1. Posture Biofeedback & Spring-Physics Skeletal Twin Card -->
+          <div class="glass-card" id="analysisCard">
+            <div class="glass-header-bar">
+              <div class="d-flex align-items-center flex-wrap gap-2">
+                <i class="bi bi-activity text-neon-cyan"></i>
+                <span class="fw-bold text-hi">Posture Biofeedback</span>
+                <span class="flow-badge flow-badge-neutral posture-state-pill font-mono" id="postureStatusBadge">
+                  <svg id="postureStatusSymbol" class="posture-sym sym-cyan me-1" aria-hidden="true"><use href="#sym-upright"></use></svg>
+                  <span class="status-dot status-dot-idle d-none" id="postureStatusDot"></span>
+                  <span id="postureBadgeTag">idle</span>
+                </span>
+              </div>
+              <span class="flow-badge flow-badge-amber font-mono tabular-nums" id="slouchTimerBadge">
+                <i class="bi bi-hourglass-split"></i>
+                <span>Slouch: <strong id="slouchTimer" class="tabular-nums">0s</strong></span>
+              </span>
+            </div>
+
+            <div class="p-3">
+              <!-- Hidden legacy JS hooks preserved -->
+              <span id="statusOrb" class="d-none"></span>
+              <i id="statusIcon" class="d-none"></i>
+              <span id="statusIndicator" class="d-none"></span>
+
+              <!-- Normal-Flow Headline & Tabular Spine Degree Readout (Zero Layout Shift) -->
+              <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                <h4 class="fw-bold mb-0 font-mono text-hi" id="postureText">IDLE</h4>
+                <span class="flow-badge flow-badge-cyan degree-readout-pill font-mono tabular-nums" id="spineAngleChip">
+                  <i class="bi bi-compass"></i>
+                  <span id="spineAngleLive" class="tabular-nums">0&deg; &bull; OPTIMAL</span>
+                </span>
+              </div>
+
+              <div class="verification-summary-line mb-2">
+                <p class="text-body-88 small mb-0" id="postureDesc">
+                  System waiting. Start the monitor or run a Demo Frame — or open the interactive Biofeedback Lab to test posture angles.
+                </p>
+              </div>
+
+              <!-- Biomonitor Telemetry & Slouch Warning HUD (Calm Cyan unless Slouching) -->
+              <div class="cyber-hud-banner hud-state-idle mb-3" id="dashCyberHud" role="status" aria-live="polite">
+                <div class="cyber-hud-top-row">
+                  <span class="d-inline-flex align-items-center gap-1">
+                    <i class="bi bi-cpu-fill" id="dashCyberHudIcon"></i>
+                    <span id="dashCyberHudSub">BIOMETRIC TELEMETRY // STANDBY</span>
+                  </span>
+                  <span class="cyber-hud-code" id="dashCyberHudCode">STANDBY</span>
+                </div>
+                <span class="cyber-hud-main-text" id="dashCyberHudText">AWAITING LIVE STREAM — CLICK BIOFEEDBACK LAB FOR INTERACTIVE SIMULATOR</span>
+              </div>
+
+              <!-- Link to Dedicated Interactive Biofeedback Simulator (example.html) -->
+              <div class="glass-subpanel p-3 mb-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div>
+                  <div class="fw-bold text-hi small d-flex align-items-center gap-2">
+                    <i class="bi bi-sliders2 text-neon-cyan"></i>
+                    <span>Interactive Biofeedback Simulator</span>
+                  </div>
+                  <div class="text-soft-80" style="font-size: 0.75rem;">
+                    Test -90&deg; to +90&deg; spine kinematics, skeletal twin &amp; 740 Hz tone in the dedicated lab.
+                  </div>
+                </div>
+                <a href="example.html" class="btn-glass-secondary small py-2 px-3 text-decoration-none">
+                  <i class="bi bi-box-arrow-up-right text-neon-cyan"></i>
+                  <span>Open Biofeedback Lab</span>
+                </a>
+              </div>
+
+              <!-- Hidden compatibility hooks for live posture engine -->
+              <div class="d-none">
+                <div id="dashSkeletonStage"><div id="dashboardSkeletonMount"></div></div>
+                <input type="range" id="dashPostureSlider" min="-90" max="90" value="0" />
+                <button id="dashPresetLying"></button>
+                <button id="dashPresetGood"></button>
+                <button id="dashPresetWarn"></button>
+                <button id="dashPresetBad"></button>
+              </div>
+
+              <!-- Live 740 Hz Alert Tone Frequency Waveform -->
+              <div class="waveform-box" id="dashWaveBox">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-1">
+                  <span class="font-mono fw-semibold text-body-88" style="font-size: 0.74rem;">
+                    <i class="bi bi-soundwave text-neon-cyan me-1" id="dashWaveIcon"></i>740 Hz Acoustic Biofeedback
+                  </span>
+                  <span id="dashWaveLabel" class="font-mono text-soft-80" style="font-size: 0.72rem;">Quiet Standby</span>
+                </div>
+                <canvas id="dashboardWaveformCanvas" style="width: 100%; height: 42px; display: block;"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Smooth-Counting Telemetry & Threshold Card -->
+          <div class="glass-card">
+            <div class="glass-header-bar">
+              <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-graph-up-arrow text-neon-cyan"></i>
+                <span class="fw-bold text-hi">Session Telemetry</span>
+              </div>
+              <span class="flow-badge flow-badge-cyan font-mono">REALTIME</span>
+            </div>
+
+            <div class="p-3">
+              <div class="row g-2 mb-3">
+                <div class="col-4">
+                  <div class="metric-tile">
+                    <div class="text-soft-80 font-mono mb-1" style="font-size: 0.69rem;">CONFIDENCE</div>
+                    <div id="topConfidence" class="fs-4 fw-bold text-neon-cyan font-mono tabular-nums">--%</div>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="metric-tile">
+                    <div class="text-soft-80 font-mono mb-1" style="font-size: 0.69rem;">DETECTIONS</div>
+                    <div id="detectionCount" class="fs-4 fw-bold text-hi font-mono tabular-nums">0</div>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="metric-tile">
+                    <div class="text-soft-80 font-mono mb-1" style="font-size: 0.69rem;">GOOD RATE</div>
+                    <div id="goodRateValue" class="fs-4 fw-bold text-neon-good font-mono tabular-nums">100%</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Confidence Filter Slider -->
+              <div class="glass-subpanel p-3">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                  <label for="confThreshold" class="small fw-semibold text-hi mb-0">
+                    <i class="bi bi-funnel text-neon-cyan me-1"></i>Confidence Threshold
+                  </label>
+                  <span id="confValue" class="flow-badge flow-badge-cyan font-mono">40%</span>
+                </div>
+                <input type="range" class="form-range" id="confThreshold" min="0.1" max="0.9" step="0.05" value="0.4" oninput="updateConfidenceDisplay(this.value)" onchange="saveUserSettingsToCloud()">
+                <div class="d-flex justify-content-between text-soft-80 font-mono" style="font-size: 0.71rem;">
+                  <span>10% (Permissive)</span>
+                  <span>90% (Strict)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Hardware, Audio & Cloud Automation Card (One-Button Expandable) -->
+          <div class="glass-card">
+            <button type="button" class="glass-header-bar glass-expand-trigger" data-bs-toggle="collapse" data-bs-target="#reminderCollapsePanel" aria-expanded="false" aria-controls="reminderCollapsePanel">
+              <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-bell text-neon-amber"></i>
+                <span class="fw-bold text-hi">Alert &amp; Cloud Automation</span>
+                <span class="flow-badge flow-badge-amber font-mono" style="font-size: 0.66rem;">REMINDERS</span>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span class="font-mono text-soft-80 small" style="font-size: 0.72rem;">Expand</span>
+                <i class="bi bi-chevron-down text-neon-cyan expand-chevron-icon"></i>
+              </div>
+            </button>
+
+            <div class="collapse" id="reminderCollapsePanel">
+              <div class="p-3 d-flex flex-column gap-2">
+                <div class="glass-subpanel p-2 px-3 d-flex justify-content-between align-items-center gap-2">
+                  <div>
+                    <div class="fw-semibold text-hi small">Browser 740 Hz Chime</div>
+                    <div class="text-soft-80" style="font-size: 0.75rem;">Plays tone when slouching exceeds 5s</div>
+                  </div>
+                  <div class="form-check form-switch m-0 fs-5">
+                    <input class="form-check-input" type="checkbox" id="audioToggle" onchange="saveUserSettingsToCloud()" aria-label="Browser 740 Hz Chime">
+                  </div>
+                </div>
+
+                <div class="glass-subpanel p-2 px-3 d-flex justify-content-between align-items-center gap-2">
+                  <div>
+                    <div class="fw-semibold text-hi small">ESP32 Hardware Feedback</div>
+                    <div class="text-soft-80" style="font-size: 0.75rem;">Triggers buzzer/LED signal via Bluetooth, USB or Firebase</div>
+                  </div>
+                  <div class="form-check form-switch m-0 fs-5">
+                    <input class="form-check-input" type="checkbox" id="espAlertToggle" checked onchange="saveUserSettingsToCloud()" aria-label="ESP32 Hardware Feedback">
+                  </div>
+                </div>
+
+                <div class="glass-subpanel p-2 px-3 d-flex justify-content-between align-items-center gap-2">
+                  <div>
+                    <div class="fw-semibold text-hi small">Auto-Save Bad Posture to Firebase</div>
+                    <div class="text-soft-80" style="font-size: 0.75rem;">Uploads snapshot &amp; Firestore log after 5s slouch</div>
+                  </div>
+                  <div class="form-check form-switch m-0 fs-5">
+                    <input class="form-check-input" type="checkbox" id="autoCloudSaveToggle" checked onchange="saveUserSettingsToCloud()" aria-label="Auto-Save Bad Posture to Firebase">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Bottom Row: Firebase Cloud Posture History & Storage Snapshots (One-Button Expandable) -->
+      <div class="row mt-4">
+        <div class="col-12">
+          <div class="glass-card">
+            <div class="glass-header-bar">
+              <button type="button" class="glass-expand-trigger p-0 d-flex align-items-center flex-wrap gap-2 flex-grow-1" data-bs-toggle="collapse" data-bs-target="#historyCollapsePanel" aria-expanded="false" aria-controls="historyCollapsePanel">
+                <i class="bi bi-cloud-haze2 text-neon-cyan fs-5"></i>
+                <span class="fw-bold text-hi">Firebase Posture History &amp; Cloud Snapshots</span>
+                <span class="flow-badge flow-badge-neutral font-mono" id="logCountBadge">0 Events</span>
+                <i class="bi bi-chevron-down text-neon-cyan expand-chevron-icon ms-2"></i>
+              </button>
+              <div class="d-flex align-items-center flex-wrap gap-2">
+                <button type="button" class="btn-glass-subtle small py-1 px-2" onclick="loadFirestoreHistory()">
+                  <i class="bi bi-arrow-clockwise text-neon-cyan"></i>
+                  <span>Refresh Cloud Logs</span>
+                </button>
+                <button type="button" class="btn-glass-subtle small py-1 px-2" onclick="clearLocalLogs()">
+                  <i class="bi bi-trash3 text-neon-crimson"></i>
+                  <span>Clear View</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="collapse" id="historyCollapsePanel">
+              <div class="p-0">
+                <div class="table-responsive">
+                  <table class="table table-glass align-middle mb-0 small">
+                    <thead>
+                      <tr class="text-soft-80 font-mono" style="font-size: 0.74rem; border-bottom: 1px solid rgba(255,255,255,0.10);">
+                        <th class="ps-4 py-3">TIMESTAMP</th>
+                        <th class="py-3">POSTURE STATUS</th>
+                        <th class="py-3">CONFIDENCE</th>
+                        <th class="py-3">SLOUCH DURATION</th>
+                        <th class="py-3">STORAGE SNAPSHOT</th>
+                        <th class="pe-4 py-3 text-end">SYNC SOURCE</th>
+                      </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                      <tr>
+                        <td colspan="6" class="text-center text-soft-80 py-4">
+                          <i class="bi bi-inbox fs-4 d-block mb-1 text-neon-cyan"></i>
+                          No posture events recorded yet. Run a Demo Frame, click "Save Snapshot", or start monitoring.
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- =================================================================== -->
+  <!-- MINIMIZED CYBERPUNK FLOATING MINI-WIDGET                            -->
+  <!-- =================================================================== -->
+  <div id="miniFloatingWidget" class="glass-card cyber-mini-widget p-3 d-none">
+    <div class="d-flex align-items-center justify-content-between mb-2 pb-2" style="border-bottom: 1px solid rgba(255,255,255,0.10);">
+      <div class="d-flex align-items-center gap-2">
+        <span class="status-dot status-dot-cyan" id="miniWidgetDot"></span>
+        <span class="fw-bold text-hi font-display">Sandy // MINI HUD</span>
+      </div>
+      <div class="d-flex align-items-center gap-1">
+        <button type="button" class="btn-glass-subtle small py-1 px-2" onclick="popOutPictureInPicture()" title="Pop out floating Picture-in-Picture window">
+          <i class="bi bi-box-arrow-up-right text-neon-cyan"></i>
+        </button>
+        <button type="button" class="btn-neon-primary small py-1 px-2" onclick="toggleMinimizeMode(false)" title="Expand full dashboard">
+          <i class="bi bi-arrows-angle-expand me-1"></i>
+          <span>Expand</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="glass-subpanel p-2 px-3 mb-2 d-flex align-items-center justify-content-between">
+      <div>
+        <div class="text-soft-80 font-mono" style="font-size: 0.68rem;">BIOMETRIC STATUS</div>
+        <div id="miniPostureStatus" class="fw-bold font-mono text-neon-cyan">IDLE</div>
+      </div>
+      <div class="text-end">
+        <div class="text-soft-80 font-mono" style="font-size: 0.68rem;">GOOD RATE</div>
+        <div id="miniPostureScore" class="fw-bold font-mono text-neon-good">100%</div>
+      </div>
+    </div>
+
+    <div class="d-flex align-items-center justify-content-between font-mono small">
+      <span class="text-soft-80">Slouch: <strong id="miniSlouchTime" class="text-neon-amber">0s</strong></span>
+      <button type="button" class="btn-glass-secondary small py-1 px-2" onclick="toggleStream()">
+        <i class="bi bi-play-circle text-neon-cyan"></i>
+        <span>Start / Stop</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- =================================================================== -->
+  <!-- MODAL 1: Cloud Account Profile Modal (Separate Sign In / Sign Up)   -->
+  <!-- =================================================================== -->
+  <div class="modal fade" id="authModal" tabindex="-1" aria-labelledby="authModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content glass-modal">
+        <div class="modal-header">
+          <h6 class="modal-title fw-bold text-hi d-flex align-items-center gap-2" id="authModalLabel">
+            <i class="bi bi-shield-lock text-neon-cyan"></i> Sandy Cloud Account
+          </h6>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Signed-in Profile View -->
+          <div id="signedInView" class="d-none text-center py-3">
+            <div class="mb-3">
+              <span class="flow-badge flow-badge-good font-mono">
+                <span class="status-dot status-dot-good"></span>
+                <span>ACTIVE PROFILE</span>
+              </span>
+            </div>
+            <h5 class="fw-bold text-hi mb-1" id="userNameDisplay">Sandy User</h5>
+            <div class="text-neon-cyan small mb-1" id="userEmailDisplay">user@example.com</div>
+            <div class="text-soft-80 font-mono small mb-3">UID: <span id="userUidDisplay">--</span></div>
+            <p class="small text-body-88 mb-4">
+              Your posture history, snapshots, and threshold settings are automatically synced with Firebase Firestore &amp; Storage.
+            </p>
+            <button type="button" class="btn-neon-danger small py-2 px-4" onclick="handleSignOut()">
+              <i class="bi bi-box-arrow-right"></i>
+              <span>Sign Out</span>
+            </button>
+          </div>
+
+          <!-- Signed-Out Prompt (Directs to Individual Sign In / Sign Up Pages) -->
+          <div id="signedOutView" class="text-center py-3">
+            <div class="mb-3">
+              <i class="bi bi-shield-lock display-5 text-neon-cyan"></i>
+            </div>
+            <h6 class="fw-bold text-hi mb-2">Choose Account Action</h6>
+            <p class="small text-body-88 mb-4">
+              Sign in to an existing Sandy account or create a new profile to sync your posture history with Firebase.
+            </p>
+            <div class="d-grid gap-2">
+              <a href="signin.html?next=Interface.html" class="btn-glass-secondary py-2">
+                <i class="bi bi-box-arrow-in-right text-neon-cyan"></i>
+                <span>Go to Sign In Page</span>
+              </a>
+              <a href="signup.html?next=Interface.html" class="btn-neon-primary py-2">
+                <i class="bi bi-person-plus-fill"></i>
+                <span>Go to Sign Up Page</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================================================================== -->
+  <!-- MODAL 2: Gateway, Colab & Firebase Settings Modal                   -->
+  <!-- =================================================================== -->
+  <div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content glass-modal">
+        <div class="modal-header">
+          <h6 class="modal-title fw-bold text-hi d-flex align-items-center gap-2" id="settingsModalLabel">
+            <i class="bi bi-sliders text-neon-cyan"></i> Cloud Gateway, Colab &amp; Firebase Settings
+          </h6>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body d-flex flex-column gap-3">
+          <!-- Section 1: Colab ngrok Tunnel Connection -->
+          <div>
+            <label for="apiUrl" class="form-label text-hi small fw-semibold">
+              <i class="bi bi-cloud-arrow-up me-1 text-neon-cyan"></i> Google Colab / FastAPI Gateway URL
+            </label>
+            <div class="input-group">
+              <input type="text" id="apiUrl" class="form-control glass-input font-mono small" placeholder="https://xxxx.ngrok-free.app" />
+              <button type="button" class="btn-glass-secondary small" id="btnSaveColab" onclick="configureColabEndpoint()">
+                Save Endpoint
+              </button>
+            </div>
+            <div class="form-text text-soft-80" style="font-size: 0.76rem;">
+              Forwards incoming ESP32 or webcam frames to <code class="text-neon-cyan">{url}/predict</code> (or polls <code class="text-neon-cyan">/api/status</code>) to classify posture.
+            </div>
+          </div>
+
+          <!-- Section 2: Stream Source Selection -->
+          <div>
+            <label for="feedSource" class="form-label text-hi small fw-semibold">
+              <i class="bi bi-broadcast me-1 text-neon-good"></i> ESP32-S3 / Camera Input Source
+            </label>
+            <select id="feedSource" class="form-select glass-input small" onchange="handleSourceChange()">
+              <option value="colab_gateway" selected>ESP32-S3 N16R8 via Gateway / Colab (/infer &rarr; /api/status)</option>
+              <option value="ble_direct">ESP32-S3 via Bluetooth Wireless (Web Bluetooth BLE)</option>
+              <option value="usb_serial">ESP32 via USB Cable (Plug &amp; Play into Laptop - No Wi-Fi Needed)</option>
+              <option value="firebase_relay">ESP32 via Firebase Cloud Relay (Firestore esp32_stream/latest)</option>
+              <option value="esp_direct">ESP32 Direct Hotspot / IP (http://192.168.4.1/capture)</option>
+              <option value="webcam">Phone / Laptop Built-in Camera (Browser Mode)</option>
+            </select>
+            <div class="form-text text-soft-80 mt-1" id="sourceHelpText" style="font-size: 0.76rem;">
+              Receives live JPEG frames uploaded by your <code class="text-neon-cyan">ESP32-S3-WROOM-1-N16R8</code> (<code class="text-neon-cyan">POST /infer</code>) via the Gateway/Colab <code class="text-neon-cyan">/api/status</code> endpoint.
+            </div>
+          </div>
+
+          <!-- Optional BLE Wi-Fi Provisioning Box -->
+          <div id="bleWifiProvisionWrapper" class="d-none glass-subpanel p-3">
+            <label class="form-label text-hi small fw-semibold mb-2">
+              <i class="bi bi-bluetooth text-neon-cyan me-1"></i> Send Home Wi-Fi to ESP32-S3 over Bluetooth (Optional)
+            </label>
+            <div class="row g-2">
+              <div class="col-sm-5">
+                <input type="text" id="bleWifiSsid" class="form-control glass-input small" placeholder="Wi-Fi SSID" />
+              </div>
+              <div class="col-sm-5">
+                <input type="password" id="bleWifiPass" class="form-control glass-input small" placeholder="Wi-Fi Password" />
+              </div>
+              <div class="col-sm-2 d-grid">
+                <button type="button" class="btn-glass-secondary small" onclick="sendWifiOverBluetooth()">Send</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ESP32 Direct IP Input -->
+          <div id="espDirectInputWrapper" class="d-none">
+            <label for="espIpUrl" class="form-label text-hi small fw-semibold">ESP32-CAM Snapshot or Stream URL</label>
+            <input type="text" id="espIpUrl" class="form-control glass-input font-mono small" value="http://192.168.4.1/capture" placeholder="http://192.168.4.1/capture" />
+          </div>
+
+          <hr style="border-color: rgba(255,255,255,0.12);" class="my-1" />
+
+          <!-- Section 3: Firebase Project Configuration -->
+          <div>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-1">
+              <label for="firebaseConfigInput" class="form-label text-hi small fw-semibold mb-0">
+                <i class="bi bi-fire text-neon-amber me-1"></i> Firebase Web Config (JSON or JS Object)
+              </label>
+              <span class="flow-badge flow-badge-neutral font-mono" id="fbConfigModalStatus">
+                Loaded from firebase-config.js
+              </span>
+            </div>
+            <textarea id="firebaseConfigInput" class="form-control glass-input font-mono small" rows="5"></textarea>
+            <div class="form-text text-soft-80" style="font-size: 0.76rem;">
+              Powers Firebase Authentication, Cloud Firestore (ESP32 frame relay, posture history &amp; settings), and Firebase Storage.
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-glass-subtle small" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn-neon-primary small py-2 px-3" onclick="applyAllSettings()">
+            <i class="bi bi-check2-circle"></i>
+            <span>Apply &amp; Connect</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 & GSAP 3 -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+
+  <!-- Firebase Compat SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+
+  <!-- =================================================================== -->
+  <!-- GUEST ACCOUNT GATE (Hides Interface for Unregistered Visitors)      -->
+  <!-- =================================================================== -->
+  <div id="guestGateOverlay" style="position:fixed; inset:0; z-index:9997; background:rgba(3,5,8,0.94); backdrop-filter:blur(14px); display:flex; align-items:center; justify-content:center; padding:1.25rem;">
+    <div class="glass-card p-4 p-sm-5 text-center" style="max-width:490px; width:100%; border:1px solid rgba(0,240,255,0.45); box-shadow:0 24px 60px rgba(0,0,0,0.88);">
+      <div class="mb-3">
+        <span class="flow-badge flow-badge-cyan font-mono">
+          <i class="bi bi-lock-fill"></i>
+          <span>ACCOUNT REQUIRED</span>
+        </span>
+      </div>
+      <h3 class="fw-bold text-hi font-display mb-2">Live Monitor Is For Registered Users</h3>
+      <p class="text-body-88 small mb-4">
+        Create a free Sandy account or sign in to access the Live Vision Monitor. Want to explore first? Try our interactive Biofeedback Demo!
+      </p>
+      <div class="d-grid gap-2">
+        <a href="example.html" class="btn-neon-primary py-2 text-decoration-none">
+          <i class="bi bi-activity me-1"></i>
+          <span>Try Interactive Demo</span>
+        </a>
+        <a href="signup.html?next=Interface.html" class="btn-glass-secondary py-2 text-decoration-none">
+          <i class="bi bi-person-plus-fill text-neon-cyan me-1"></i>
+          <span>Create Free Account</span>
+        </a>
+        <a href="signin.html?next=Interface.html" class="btn-glass-subtle py-2 text-decoration-none small">
+          <i class="bi bi-box-arrow-in-right me-1"></i>
+          <span>Sign In</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================================================================== -->
+  <!-- EMAIL VERIFICATION GATE (Blocks Interface until Email is Verified)  -->
+  <!-- =================================================================== -->
+  <div id="verifyGateOverlay" class="d-none" style="position:fixed; inset:0; z-index:9998; background:rgba(3,5,8,0.82); backdrop-filter:blur(10px); display:flex; align-items:center; justify-content:center; padding:1.25rem;">
+    <div class="glass-card p-4 p-sm-5 text-center" style="max-width:480px; width:100%; border:1px solid rgba(255,42,109,0.55); box-shadow:0 24px 60px rgba(0,0,0,0.85);">
+      <div class="mb-3">
+        <span class="flow-badge flow-badge-bad font-mono">
+          <i class="bi bi-envelope-exclamation-fill"></i>
+          <span>UNVERIFIED EMAIL</span>
+        </span>
+      </div>
+      <h3 class="fw-bold text-hi font-display mb-2">Verify Your Email to Continue</h3>
+      <p class="text-body-88 small mb-2">
+        To protect your Sandy account and posture telemetry, please verify your email address before interacting with the Live Monitor:
+      </p>
+      <div id="verifyGateEmail" class="text-neon-cyan font-mono fw-bold mb-3">--</div>
+      <div id="verifyGateMsg" class="glass-alert glass-alert-good d-none small py-2 mb-3"></div>
+      <div class="d-grid gap-2">
+        <button type="button" class="btn-neon-primary py-2" onclick="sendGateVerificationEmail()">
+          <i class="bi bi-envelope-check-fill me-1"></i>
+          <span>Send Verification Email</span>
+        </button>
+        <button type="button" class="btn-glass-secondary py-2" onclick="refreshGateVerification()">
+          <i class="bi bi-arrow-clockwise text-neon-cyan me-1"></i>
+          <span>I've Verified — Refresh Status</span>
+        </button>
+        <a href="profile.html#security" class="btn-glass-subtle py-2 text-decoration-none small">
+          <i class="bi bi-shield-lock me-1"></i>
+          <span>Open Security Settings</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Default Firebase Config, Shared Motion Engine & Sandy Profile Nav -->
+  <script src="firebase-config.js"></script>
+  <script src="posture-motion.js"></script>
+  <script src="sandy-nav.js"></script>
+
+  <script>
+    // =========================================================================
+    // DOM Element References
+    // =========================================================================
+    const espStreamImg = document.getElementById('espStream');
+    const video = document.getElementById('webcam');
+    const canvas = document.getElementById('overlay');
+    const ctx = canvas.getContext('2d');
+    const streamPlaceholder = document.getElementById('streamPlaceholder');
+
+    const btnToggle = document.getElementById('btnToggle');
+    const apiUrlInput = document.getElementById('apiUrl');
+    const feedSourceSelect = document.getElementById('feedSource');
+    const espIpUrlInput = document.getElementById('espIpUrl');
+    const espDirectInputWrapper = document.getElementById('espDirectInputWrapper');
+    const sourceHelpText = document.getElementById('sourceHelpText');
+    const sourceIndicator = document.getElementById('sourceIndicator');
+
+    const analysisCard = document.getElementById('analysisCard');
+    const dashSkeletonStage = document.getElementById('dashSkeletonStage');
+    const dashWaveBox = document.getElementById('dashWaveBox');
+    const dashWaveIcon = document.getElementById('dashWaveIcon');
+    const dashWaveLabel = document.getElementById('dashWaveLabel');
+    const postureStatusBadge = document.getElementById('postureStatusBadge');
+    const postureStatusDot = document.getElementById('postureStatusDot');
+    const postureBadgeTag = document.getElementById('postureBadgeTag');
+    const postureText = document.getElementById('postureText');
+    const postureDesc = document.getElementById('postureDesc');
+
+    const connectionBadge = document.getElementById('connectionBadge');
+    const espBadge = document.getElementById('espBadge');
+    const espNodePill = document.getElementById('espNodePill');
+    const espNavStatus = document.getElementById('espNavStatus');
+    const colabNavStatus = document.getElementById('colabNavStatus');
+    const espDot = document.getElementById('espDot');
+    const colabDot = document.getElementById('colabDot');
+    const firebaseDot = document.getElementById('firebaseDot');
+    const firebaseNavStatus = document.getElementById('firebaseNavStatus');
+
+    const livePill = document.getElementById('livePill');
+    const liveDot = document.getElementById('liveDot');
+    const liveStatusText = document.getElementById('liveStatusText');
+
+    const topConfidence = document.getElementById('topConfidence');
+    const detectionCount = document.getElementById('detectionCount');
+    const goodRateValue = document.getElementById('goodRateValue');
+    const latencyText = document.getElementById('latencyText');
+    const fpsText = document.getElementById('fpsText');
+    const resText = document.getElementById('resText');
+    const lastFrameTimeText = document.getElementById('lastFrameTimeText');
+    const slouchTimer = document.getElementById('slouchTimer');
+    const audioToggle = document.getElementById('audioToggle');
+    const espAlertToggle = document.getElementById('espAlertToggle');
+    const autoCloudSaveToggle = document.getElementById('autoCloudSaveToggle');
+
+    // Motion & Biofeedback Visualizers
+    let dashSkeleton = null;
+    let dashWaveform = null;
+
+    // Runtime state
+    let isStreaming = false;
+    let isProcessing = false;
+    let directPollTimer = null;
+    let firestoreStreamUnsub = null;
+    let rtdbStreamRef = null;
+    let lastFrameTime = performance.now();
+    let badPostureSeconds = 0;
+    let timerInterval = null;
+    let audioCtx = null;
+    let demoBadToggle = false;
+    let lastAutoSnapshotTime = 0;
+    let postureLogs = [];
+
+    // Session counters
+    let goodFrameCount = 0;
+    let badFrameCount = 0;
+
+    // Firebase instances
+    let fbApp = null;
+    let fbAuth = null;
+    let fbDb = null;
+    let fbRtdb = null;
+    let fbStorage = null;
+    let currentUser = null;
+
+    // =========================================================================
+    // Biofeedback State & Bidirectional Slider Helper (-90° to +90°)
+    // - -90° to -30° : `lying_down`     (Electric Cyan #00F0FF, ZERO warnings)
+    // - -29° to +15° : `sitting_good`   (Electric Cyan #00F0FF, ZERO warnings)
+    // - +16° to +35° : `caution_slouch` (Hazard Yellow #FFE600, caution HUD)
+    // - +36° to +90° : `sitting_bad`    (Glitch Red #FF2A6D, critical alert)
+    // =========================================================================
+    function applyBiofeedbackUI(mode, confidencePct = null, customEval = null) {
+      const sliderEl = document.getElementById('dashPostureSlider');
+      const spineChip = document.getElementById('spineAngleChip');
+      const cyberHud = document.getElementById('dashCyberHud');
+      const cyberHudIcon = document.getElementById('dashCyberHudIcon');
+      const cyberHudSub = document.getElementById('dashCyberHudSub');
+      const cyberHudText = document.getElementById('dashCyberHudText');
+      const cyberHudCode = document.getElementById('dashCyberHudCode');
+
+      const presetLying = document.getElementById('dashPresetLying');
+      const presetGood = document.getElementById('dashPresetGood');
+      const presetWarn = document.getElementById('dashPresetWarn');
+      const presetBad = document.getElementById('dashPresetBad');
+
+      const isBad = mode === 'sitting_bad';
+      const isWarn = mode === 'sitting_caution' || mode === 'caution_slouch' || (customEval ? customEval.severity === 'warning' : false);
+      const isLying = mode === 'lying_down';
+      const isGood = mode === 'sitting_good' && !isWarn;
+
+      if (!customEval) {
+        if (dashSkeleton) {
+          dashSkeleton.setState(mode);
+        }
+        if (sliderEl) {
+          const syncedDeg = isBad ? 58 : isLying ? -75 : isWarn ? 25 : 0;
+          sliderEl.value = syncedDeg;
+          sliderEl.style.setProperty('--thumb-accent', isBad ? '#FF2A6D' : isWarn ? '#FFE600' : '#00F0FF');
+        }
+      } else if (sliderEl) {
+        sliderEl.style.setProperty('--thumb-accent', customEval.accentColor);
+      }
+
+      if (dashWaveform) {
+        dashWaveform.setAlertActive(isBad, isWarn);
+      }
+
+      if (presetLying) presetLying.className = 'preset-tab-btn font-mono';
+      if (presetGood) presetGood.className = 'preset-tab-btn font-mono';
+      if (presetWarn) presetWarn.className = 'preset-tab-btn font-mono';
+      if (presetBad) presetBad.className = 'preset-tab-btn font-mono';
+
+      if (isLying && presetLying) presetLying.classList.add('active-cyan');
+      else if (isGood && presetGood) presetGood.classList.add('active-cyan');
+      else if (isWarn && presetWarn) presetWarn.classList.add('active-yellow');
+      else if (isBad && presetBad) presetBad.classList.add('active-crimson');
+
+      analysisCard.classList.remove('alert-bad-aura', 'alert-warn-aura');
+      dashSkeletonStage.classList.remove('stage-bad', 'stage-warn');
+      dashWaveBox.classList.remove('wave-bad-active');
+
+      if (isBad) {
+        analysisCard.classList.add('alert-bad-aura');
+        dashSkeletonStage.classList.add('stage-bad');
+        dashWaveBox.classList.add('wave-bad-active');
+        dashWaveIcon.className = 'bi bi-soundwave text-neon-crimson me-1';
+        dashWaveLabel.className = 'font-mono text-neon-crimson fw-semibold';
+        dashWaveLabel.textContent = '740 Hz Alert Active';
+
+        if (cyberHud) {
+          cyberHud.className = 'cyber-hud-banner hud-state-critical mb-2';
+          if (cyberHudIcon) cyberHudIcon.className = 'bi bi-exclamation-triangle-fill';
+          if (cyberHudSub) {
+            cyberHudSub.textContent = customEval
+              ? customEval.hudSubStatus
+              : 'POSTURE ALERT // SEVERE KYPHOTIC SLOUCH';
+          }
+          if (cyberHudText) {
+            cyberHudText.textContent = customEval
+              ? customEval.hudMainText
+              : '[ ⚠️ CRITICAL ERROR: CYBERPSYCHOSIS THRESHOLD EXCEEDED // NEURAL STABILITY COMPROMISED ]';
+          }
+          if (cyberHudCode) cyberHudCode.textContent = customEval ? customEval.hudCode : 'SITTING_BAD';
+        }
+
+        postureStatusBadge.className = 'flow-badge flow-badge-bad posture-state-pill font-mono';
+        postureStatusDot.className = 'status-dot status-dot-bad';
+        postureBadgeTag.textContent = 'sitting_bad';
+        const symEl = document.getElementById('postureStatusSymbol');
+        if (symEl) {
+          symEl.className = 'posture-sym sym-red is-glitch me-1';
+          const u = symEl.querySelector('use');
+          if (u) u.setAttribute('href', '#sym-glitch');
+        }
+        if (spineChip) spineChip.className = 'flow-badge flow-badge-bad degree-readout-pill font-mono tabular-nums';
+
+        postureText.textContent = 'SEVERE SLOUCH';
+        postureText.className = 'fw-bold mb-0 font-mono text-neon-crimson';
+        postureDesc.textContent = customEval
+          ? customEval.summary
+          : 'Severe forward flexion (+36° to +90°) detected. Realign spine, shoulders & head.';
+      } else if (isWarn) {
+        analysisCard.classList.add('alert-warn-aura');
+        dashSkeletonStage.classList.add('stage-warn');
+        dashWaveIcon.className = 'bi bi-soundwave text-neon-yellow me-1';
+        dashWaveLabel.className = 'font-mono text-neon-yellow';
+        dashWaveLabel.textContent = 'Pre-Threshold';
+
+        if (cyberHud) {
+          cyberHud.className = 'cyber-hud-banner hud-state-warn mb-2';
+          if (cyberHudIcon) cyberHudIcon.className = 'bi bi-exclamation-diamond-fill';
+          if (cyberHudSub) {
+            cyberHudSub.textContent = customEval
+              ? customEval.hudSubStatus
+              : 'ERGONOMIC ADVISORY // DEBOUNCE BUFFER ACTIVE';
+          }
+          if (cyberHudText) {
+            cyberHudText.textContent = customEval
+              ? customEval.hudMainText
+              : 'POSTURAL DRIFT DETECTED // CERVICAL STRAIN ELEVATING';
+          }
+          if (cyberHudCode) cyberHudCode.textContent = customEval ? customEval.hudCode : 'SITTING_CAUTION';
+        }
+
+        postureStatusBadge.className = 'flow-badge flow-badge-yellow posture-state-pill font-mono';
+        postureStatusDot.className = 'status-dot status-dot-yellow';
+        postureBadgeTag.textContent = 'sitting_caution';
+        const symElWarn = document.getElementById('postureStatusSymbol');
+        if (symElWarn) {
+          symElWarn.className = 'posture-sym sym-yellow me-1';
+          const u = symElWarn.querySelector('use');
+          if (u) u.setAttribute('href', '#sym-caution');
+        }
+        if (spineChip) spineChip.className = 'flow-badge flow-badge-yellow degree-readout-pill font-mono tabular-nums';
+
+        postureText.textContent = 'CAUTION SLOUCH';
+        postureText.className = 'fw-bold mb-0 font-mono text-neon-yellow';
+        postureDesc.textContent = customEval
+          ? customEval.summary
+          : 'Caution slouch (+16° to +35°) — 3-frame debounce monitoring.';
+      } else if (isLying) {
+        dashWaveIcon.className = 'bi bi-soundwave text-neon-cyan me-1';
+        dashWaveLabel.className = 'font-mono text-soft-80';
+        dashWaveLabel.textContent = 'Rest Standby';
+
+        if (cyberHud) {
+          cyberHud.className = 'cyber-hud-banner hud-state-calm mb-2';
+          if (cyberHudIcon) cyberHudIcon.className = 'bi bi-check-circle-fill';
+          if (cyberHudSub) {
+            cyberHudSub.textContent = customEval
+              ? customEval.hudSubStatus
+              : 'NEURAL REST PROTOCOL // ZERO SPINAL STRAIN';
+          }
+          if (cyberHudText) {
+            cyberHudText.textContent = customEval
+              ? customEval.hudMainText
+              : 'NEURAL RECHARGE IN PROGRESS // RECLINED REST MODE ACTIVE';
+          }
+          if (cyberHudCode) cyberHudCode.textContent = customEval ? customEval.hudCode : 'LYING_DOWN';
+        }
+
+        postureStatusBadge.className = 'flow-badge flow-badge-cyan posture-state-pill font-mono';
+        postureStatusDot.className = 'status-dot status-dot-cyan';
+        postureBadgeTag.textContent = 'lying_down';
+        const symElLying = document.getElementById('postureStatusSymbol');
+        if (symElLying) {
+          symElLying.className = 'posture-sym sym-cyan me-1';
+          const u = symElLying.querySelector('use');
+          if (u) u.setAttribute('href', '#sym-lying');
+        }
+        if (spineChip) spineChip.className = 'flow-badge flow-badge-cyan degree-readout-pill font-mono tabular-nums';
+
+        postureText.textContent = 'LYING DOWN';
+        postureText.className = 'fw-bold mb-0 font-mono text-neon-cyan';
+        postureDesc.textContent = customEval
+          ? customEval.summary
+          : 'Lying Down / Reclined (-90° to -30°) — Spine supported cleanly; zero posture alerts.';
+      } else if (isGood) {
+        dashWaveIcon.className = 'bi bi-soundwave text-neon-cyan me-1';
+        dashWaveLabel.className = 'font-mono text-soft-80';
+        dashWaveLabel.textContent = 'Quiet Standby';
+
+        if (cyberHud) {
+          cyberHud.className = 'cyber-hud-banner hud-state-calm mb-2';
+          if (cyberHudIcon) cyberHudIcon.className = 'bi bi-check-circle-fill';
+          if (cyberHudSub) {
+            cyberHudSub.textContent = customEval
+              ? customEval.hudSubStatus
+              : 'NIGHT CITY BIOMONITOR // TELEMETRY NOMINAL';
+          }
+          if (cyberHudText) {
+            cyberHudText.textContent = customEval
+              ? customEval.hudMainText
+              : 'SPINAL VECTOR ALIGNED // NOMINAL BIOMETRICS ENFORCED';
+          }
+          if (cyberHudCode) cyberHudCode.textContent = customEval ? customEval.hudCode : 'SITTING_GOOD';
+        }
+
+        postureStatusBadge.className = 'flow-badge flow-badge-good posture-state-pill font-mono';
+        postureStatusDot.className = 'status-dot status-dot-good';
+        postureBadgeTag.textContent = 'sitting_good';
+        const symElGood = document.getElementById('postureStatusSymbol');
+        if (symElGood) {
+          symElGood.className = 'posture-sym sym-cyan me-1';
+          const u = symElGood.querySelector('use');
+          if (u) u.setAttribute('href', '#sym-upright');
+        }
+        if (spineChip) spineChip.className = 'flow-badge flow-badge-cyan degree-readout-pill font-mono tabular-nums';
+
+        postureText.textContent = 'GOOD POSTURE';
+        postureText.className = 'fw-bold mb-0 font-mono text-neon-good';
+        postureDesc.textContent = customEval
+          ? customEval.summary
+          : 'Optimal upright range (-29° to +15°). Neutral spine, 90° knees & grounded feet.';
+      } else {
+        dashWaveIcon.className = 'bi bi-soundwave text-neon-cyan me-1';
+        dashWaveLabel.className = 'font-mono text-soft-80';
+        dashWaveLabel.textContent = 'Quiet Standby';
+
+        if (cyberHud) {
+          cyberHud.className = 'cyber-hud-banner hud-state-idle mb-2';
+          if (cyberHudIcon) cyberHudIcon.className = 'bi bi-cpu-fill';
+          if (cyberHudSub) {
+            cyberHudSub.textContent = mode === 'no_target'
+              ? 'BIOMETRIC TELEMETRY // NO TARGET IN VIEWPORT'
+              : 'BIOMETRIC TELEMETRY // STANDBY';
+          }
+          if (cyberHudText) {
+            cyberHudText.textContent = mode === 'no_target'
+              ? 'SCANNING VIEWPORT — NO PERSON DETECTED ABOVE CONFIDENCE THRESHOLD'
+              : 'AWAITING LIVE STREAM OR BIDIRECTIONAL SLIDER SIMULATION (-90° TO +90°)';
+          }
+          if (cyberHudCode) cyberHudCode.textContent = mode === 'no_target' ? 'NO TARGET' : 'STANDBY';
+        }
+
+        postureStatusBadge.className = 'flow-badge flow-badge-neutral posture-state-pill font-mono';
+        postureStatusDot.className = 'status-dot status-dot-idle';
+        postureBadgeTag.textContent = mode === 'no_target' ? 'no_target' : 'idle';
+        if (spineChip) spineChip.className = 'flow-badge flow-badge-neutral degree-readout-pill font-mono tabular-nums';
+
+        postureText.textContent = mode === 'no_target' ? 'NO TARGET' : 'IDLE';
+        postureText.className = 'fw-bold mb-0 font-mono text-hi';
+        postureDesc.textContent = mode === 'no_target'
+          ? 'No person or posture detected above the confidence threshold.'
+          : 'Live monitor inactive. Start stream, run a Demo Frame, or scrub the -90° to +90° posture slider.';
+      }
+
+      if (typeof confidencePct === 'number' && window.PostureMotion) {
+        window.PostureMotion.animateCounter(topConfidence, confidencePct, { suffix: '%', durationMs: 360 });
+      } else if (confidencePct === null) {
+        topConfidence.textContent = '--%';
+      }
+    }
+
+    function jumpDashDegrees(deg) {
+      const sliderEl = document.getElementById('dashPostureSlider');
+      if (sliderEl) sliderEl.value = deg;
+      if (dashSkeleton) dashSkeleton.setDegrees(deg, true);
+      if (window.PostureMotion) {
+        const info = window.PostureMotion.evaluatePostureDegrees(deg);
+        applyBiofeedbackUI(info.classification, info.confidence, info);
+      }
+    }
+
+    function handleDashDegreeSlider(rawVal) {
+      const deg = Number(rawVal);
+      if (dashSkeleton) {
+        dashSkeleton.setDegrees(deg, false);
+      }
+      if (window.PostureMotion) {
+        const info = window.PostureMotion.evaluatePostureDegrees(deg);
+        applyBiofeedbackUI(info.classification, info.confidence, info);
+      }
+    }
+
+    // =========================================================================
+    // Firebase Initialization & Auth / Firestore / Storage
+    // =========================================================================
+    function isValidFirebaseConfig(cfg) {
+      return cfg &&
+        typeof cfg === 'object' &&
+        cfg.apiKey &&
+        cfg.apiKey !== 'YOUR_FIREBASE_API_KEY' &&
+        cfg.projectId &&
+        cfg.projectId !== 'YOUR_PROJECT_ID';
+    }
+
+    function parseFlexibleConfigInput(rawText) {
+      if (!rawText || !rawText.trim()) return null;
+      let cleaned = rawText.trim();
+      const braceStart = cleaned.indexOf('{');
+      const braceEnd = cleaned.lastIndexOf('}');
+      if (braceStart !== -1 && braceEnd > braceStart) {
+        cleaned = cleaned.substring(braceStart, braceEnd + 1);
+      }
+      try {
+        return JSON.parse(cleaned);
+      } catch (_) {
+        try {
+          return (new Function(`return (${cleaned});`))();
+        } catch (err) {
+          console.warn('Unable to parse Firebase config input:', err);
+          return null;
+        }
+      }
+    }
+
+    function initFirebaseSystem(customConfig = null) {
+      let configToUse = customConfig;
+
+      if (!configToUse && isValidFirebaseConfig(window.DEFAULT_FIREBASE_CONFIG)) {
+        configToUse = window.DEFAULT_FIREBASE_CONFIG;
+      }
+      if (!configToUse) {
+        const savedStr = localStorage.getItem('postureai_firebase_config');
+        if (savedStr) {
+          configToUse = parseFlexibleConfigInput(savedStr);
+        }
+      }
+
+      if (!isValidFirebaseConfig(configToUse)) {
+        firebaseNavStatus.textContent = 'Setup Required';
+        firebaseNavStatus.className = 'fw-bold text-neon-amber';
+        firebaseDot.className = 'status-dot status-dot-amber';
+        return false;
+      }
+
+      try {
+        if (!firebase.apps.length) {
+          fbApp = firebase.initializeApp(configToUse);
+        } else {
+          fbApp = firebase.app();
+        }
+        if (configToUse.measurementId && typeof firebase.analytics === 'function') {
+          try { firebase.analytics(); } catch (_) {}
+        }
+        fbAuth = firebase.auth();
+        fbDb = firebase.firestore();
+        fbStorage = firebase.storage();
+        if (configToUse.databaseURL) {
+          try { fbRtdb = firebase.database(); } catch (_) {}
+        }
+
+        document.getElementById('firebaseConfigInput').value = JSON.stringify(configToUse, null, 2);
+        firebaseNavStatus.textContent = 'Connected';
+        firebaseNavStatus.className = 'fw-bold text-neon-good';
+        firebaseDot.className = 'status-dot status-dot-good';
+        document.getElementById('fbConfigModalStatus').textContent = `Connected: ${configToUse.projectId}`;
+
+        fbAuth.onAuthStateChanged(async (user) => {
+          currentUser = user;
+          updateAuthUI(user);
+          if (user) {
+            await loadUserSettingsFromCloud(user.uid);
+          }
+          await loadFirestoreHistory();
+        });
+
+        return true;
+      } catch (err) {
+        console.error('Firebase init error:', err);
+        firebaseNavStatus.textContent = 'Config Error';
+        firebaseNavStatus.className = 'fw-bold text-neon-crimson';
+        firebaseDot.className = 'status-dot status-dot-bad';
+        return false;
+      }
+    }
+
+    function updateAuthUI(user) {
+      const btnOpenAuth = document.getElementById('btnOpenAuth');
+      const navSignedOutGroup = document.getElementById('navSignedOutGroup');
+      const signedInView = document.getElementById('signedInView');
+      const signedOutView = document.getElementById('signedOutView');
+      const guestGate = document.getElementById('guestGateOverlay');
+      const verifyGate = document.getElementById('verifyGateOverlay');
+      const verifyEmailEl = document.getElementById('verifyGateEmail');
+      const mainEl = document.querySelector('main');
+
+      if (btnOpenAuth) btnOpenAuth.classList.add('d-none');
+
+      if (user) {
+        if (guestGate) guestGate.classList.add('d-none');
+        if (mainEl) mainEl.classList.remove('d-none');
+        if (navSignedOutGroup) {
+          navSignedOutGroup.classList.add('d-none');
+          navSignedOutGroup.classList.remove('d-flex');
+        }
+        if (signedInView) signedInView.classList.remove('d-none');
+        if (signedOutView) signedOutView.classList.add('d-none');
+        const display = user.displayName || user.email || 'Sandy User';
+        const nameEl = document.getElementById('userNameDisplay');
+        if (nameEl) nameEl.textContent = user.displayName || display.split('@')[0];
+        const emailEl = document.getElementById('userEmailDisplay');
+        if (emailEl) emailEl.textContent = user.email || display;
+        const uidEl = document.getElementById('userUidDisplay');
+        if (uidEl) uidEl.textContent = user.uid;
+
+        // Enforce Email Verification Gate on Interface.html
+        if (!user.emailVerified) {
+          if (verifyEmailEl) verifyEmailEl.textContent = user.email || '';
+          if (verifyGate) verifyGate.classList.remove('d-none');
+          if (mainEl) {
+            mainEl.style.pointerEvents = 'none';
+            mainEl.style.filter = 'blur(4px)';
+          }
+        } else {
+          if (verifyGate) verifyGate.classList.add('d-none');
+          if (mainEl) {
+            mainEl.style.pointerEvents = '';
+            mainEl.style.filter = '';
+          }
+        }
+      } else {
+        // Hide the Live Monitor interface completely for unregistered / signed-out visitors
+        if (guestGate) guestGate.classList.remove('d-none');
+        if (verifyGate) verifyGate.classList.add('d-none');
+        if (mainEl) {
+          mainEl.classList.add('d-none');
+          mainEl.style.pointerEvents = 'none';
+        }
+        if (navSignedOutGroup) {
+          navSignedOutGroup.classList.remove('d-none');
+          navSignedOutGroup.classList.add('d-flex');
+        }
+        if (signedInView) signedInView.classList.add('d-none');
+        if (signedOutView) signedOutView.classList.remove('d-none');
+      }
+    }
+
+    async function sendGateVerificationEmail() {
+      const msgEl = document.getElementById('verifyGateMsg');
+      if (!currentUser) return;
+      try {
+        await currentUser.sendEmailVerification();
+        if (msgEl) {
+          msgEl.className = 'glass-alert glass-alert-good small py-2 mb-3';
+          msgEl.textContent = `Verification email sent to ${currentUser.email}! Please check your inbox.`;
+          msgEl.classList.remove('d-none');
+        }
+      } catch (err) {
+        if (msgEl) {
+          msgEl.className = 'glass-alert glass-alert-danger small py-2 mb-3';
+          msgEl.textContent = err.message;
+          msgEl.classList.remove('d-none');
+        }
+      }
+    }
+
+    async function refreshGateVerification() {
+      const msgEl = document.getElementById('verifyGateMsg');
+      if (!fbAuth || !fbAuth.currentUser) return;
+      try {
+        await fbAuth.currentUser.reload();
+        currentUser = fbAuth.currentUser;
+        updateAuthUI(currentUser);
+        if (!currentUser.emailVerified && msgEl) {
+          msgEl.className = 'glass-alert glass-alert-danger small py-2 mb-3';
+          msgEl.textContent = 'Email is not verified yet. Please click the verification link in your inbox first.';
+          msgEl.classList.remove('d-none');
+        }
+      } catch (err) {
+        if (msgEl) {
+          msgEl.className = 'glass-alert glass-alert-danger small py-2 mb-3';
+          msgEl.textContent = err.message;
+          msgEl.classList.remove('d-none');
+        }
+      }
+    }
+
+    async function handleSignOut() {
+      if (fbAuth) {
+        await fbAuth.signOut();
+      }
+      const modalEl = document.getElementById('authModal');
+      if (modalEl) {
+        const inst = bootstrap.Modal.getInstance(modalEl);
+        if (inst) inst.hide();
+      }
+    }
+
+    // =========================================================================
+    // Cloud Settings Sync (Firestore + LocalStorage)
+    // =========================================================================
+    async function saveUserSettingsToCloud() {
+      const settingsPayload = {
+        colab_url: apiUrlInput.value.trim().replace(/\/$/, ''),
+        confidence_threshold: parseFloat(document.getElementById('confThreshold').value),
+        audio_enabled: audioToggle.checked,
+        esp_alert_enabled: espAlertToggle.checked,
+        auto_save_snapshots: autoCloudSaveToggle.checked,
+        updated_at: new Date().toISOString()
+      };
+
+      localStorage.setItem('postureai_user_settings', JSON.stringify(settingsPayload));
+
+      if (fbDb && currentUser) {
+        try {
+          await fbDb.collection('user_settings').doc(currentUser.uid).set(settingsPayload, { merge: true });
+        } catch (err) {
+          console.warn('Firestore settings sync warning:', err);
+        }
+      }
+    }
+
+    async function loadUserSettingsFromCloud(uid) {
+      if (!fbDb || !uid) return;
+      try {
+        const doc = await fbDb.collection('user_settings').doc(uid).get();
+        if (doc.exists) {
+          const data = doc.data();
+          if (data.colab_url) {
+            apiUrlInput.value = data.colab_url;
+            configureColabEndpoint();
+          }
+          if (typeof data.confidence_threshold === 'number') {
+            document.getElementById('confThreshold').value = data.confidence_threshold;
+            updateConfidenceDisplay(data.confidence_threshold);
+          }
+          if (typeof data.audio_enabled === 'boolean') audioToggle.checked = data.audio_enabled;
+          if (typeof data.esp_alert_enabled === 'boolean') espAlertToggle.checked = data.esp_alert_enabled;
+          if (typeof data.auto_save_snapshots === 'boolean') autoCloudSaveToggle.checked = data.auto_save_snapshots;
+        }
+      } catch (err) {
+        console.warn('Could not load user settings from Firestore:', err);
+      }
+    }
+
+    // =========================================================================
+    // Write Hardware Alert Command Back to ESP32 via USB Serial & Firebase
+    // =========================================================================
+    async function syncHardwareAlertToFirebase(isBadPosture, slouchSec) {
+      const triggerBuzzer = Boolean(isBadPosture && espAlertToggle.checked && slouchSec >= 3);
+      if (triggerBuzzer && window.espSerialPort && window.espSerialPort.writable) {
+        try {
+          const writer = window.espSerialPort.writable.getWriter();
+          await writer.write(new TextEncoder().encode('BUZZ\n'));
+          writer.releaseLock();
+        } catch (_) {}
+      }
+      if (fbDb) {
+        try {
+          await fbDb.collection('esp32_stream').doc('command').set({
+            posture: isBadPosture ? 'BAD POSTURE' : 'GOOD POSTURE',
+            is_bad: isBadPosture,
+            trigger_buzzer: triggerBuzzer,
+            slouch_seconds: slouchSec,
+            updated_at: new Date().toISOString()
+          }, { merge: true });
+        } catch (_) {}
+      }
+      if (fbRtdb) {
+        try {
+          await fbRtdb.ref('esp32_stream/command').set({
+            posture: isBadPosture ? 'BAD POSTURE' : 'GOOD POSTURE',
+            is_bad: isBadPosture,
+            trigger_buzzer: triggerBuzzer,
+            slouch_seconds: slouchSec,
+            updated_at: Date.now()
+          });
+        } catch (_) {}
+      }
+    }
+
+    // =========================================================================
+    // Firebase Storage Snapshot Upload & Firestore Event Logging
+    // =========================================================================
+    function createCompositeSnapshotBlob() {
+      return new Promise((resolve) => {
+        const snapCanvas = document.createElement('canvas');
+        snapCanvas.width = canvas.width || 640;
+        snapCanvas.height = canvas.height || 480;
+        const sCtx = snapCanvas.getContext('2d');
+
+        if (!video.classList.contains('d-none') && video.readyState >= 2) {
+          sCtx.drawImage(video, 0, 0, snapCanvas.width, snapCanvas.height);
+        } else if (!espStreamImg.classList.contains('d-none') && espStreamImg.complete && espStreamImg.naturalWidth > 0) {
+          try {
+            sCtx.drawImage(espStreamImg, 0, 0, snapCanvas.width, snapCanvas.height);
+          } catch (_) {
+            sCtx.fillStyle = '#030508';
+            sCtx.fillRect(0, 0, snapCanvas.width, snapCanvas.height);
+          }
+        } else {
+          sCtx.fillStyle = '#030508';
+          sCtx.fillRect(0, 0, snapCanvas.width, snapCanvas.height);
+        }
+
+        sCtx.drawImage(canvas, 0, 0, snapCanvas.width, snapCanvas.height);
+
+        snapCanvas.toBlob((blob) => {
+          resolve({ blob, dataUrl: snapCanvas.toDataURL('image/jpeg', 0.82) });
+        }, 'image/jpeg', 0.82);
+      });
+    }
+
+    async function captureCloudSnapshot(manualTrigger = false) {
+      const currentStatus = postureText.textContent;
+      const confText = topConfidence.textContent.replace('%', '');
+      const confVal = isNaN(parseFloat(confText)) ? 0 : parseFloat(confText);
+
+      const cloudIndicator = document.getElementById('cloudSyncIndicator');
+      cloudIndicator.innerHTML = '<span class="spinner-border spinner-border-sm text-neon-cyan" style="width:12px;height:12px;"></span><span>Uploading to Firebase...</span>';
+
+      const { blob, dataUrl } = await createCompositeSnapshotBlob();
+      let snapshotUrl = dataUrl;
+      let syncSource = 'Local Session';
+
+      const uid = currentUser ? currentUser.uid : 'anonymous';
+      const ts = Date.now();
+
+      if (fbStorage && blob) {
+        try {
+          const storageRef = fbStorage.ref(`snapshots/${uid}/posture_${ts}.jpg`);
+          const uploadSnap = await storageRef.put(blob, { contentType: 'image/jpeg' });
+          snapshotUrl = await uploadSnap.ref.getDownloadURL();
+          syncSource = 'Firebase Storage + Firestore';
+        } catch (err) {
+          console.warn('Firebase Storage upload fallback to dataURL:', err);
+        }
+      }
+
+      const logEntry = {
+        uid: uid,
+        userEmail: currentUser ? currentUser.email : 'guest',
+        status: currentStatus,
+        confidence: confVal,
+        slouchSeconds: badPostureSeconds,
+        snapshotUrl: snapshotUrl,
+        manual: manualTrigger,
+        createdAt: new Date().toISOString(),
+        syncSource: fbDb ? (syncSource.includes('Storage') ? syncSource : 'Cloud Firestore') : 'Local Session'
+      };
+
+      if (fbDb) {
+        try {
+          await fbDb.collection('posture_logs').add({
+            ...logEntry,
+            serverTimestamp: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        } catch (err) {
+          console.warn('Firestore log write warning:', err);
+        }
+      }
+
+      postureLogs.unshift(logEntry);
+      renderHistoryTable();
+
+      cloudIndicator.innerHTML = '<i class="bi bi-cloud-check-fill text-neon-good"></i><span>Saved to Firebase</span>';
+    }
+
+    async function loadFirestoreHistory() {
+      if (!fbDb) {
+        renderHistoryTable();
+        return;
+      }
+      try {
+        let query = fbDb.collection('posture_logs').orderBy('createdAt', 'desc').limit(15);
+        if (currentUser) {
+          query = fbDb.collection('posture_logs')
+            .where('uid', '==', currentUser.uid)
+            .limit(15);
+        }
+        const snap = await query.get();
+        const loaded = [];
+        snap.forEach((doc) => loaded.push({ id: doc.id, ...doc.data() }));
+        loaded.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+        if (loaded.length > 0) {
+          postureLogs = loaded;
+        }
+        renderHistoryTable();
+      } catch (err) {
+        console.warn('Firestore history fetch note:', err);
+        renderHistoryTable();
+      }
+    }
+
+    function clearLocalLogs() {
+      postureLogs = [];
+      renderHistoryTable();
+    }
+
+    function renderHistoryTable() {
+      const tbody = document.getElementById('historyTableBody');
+      const badge = document.getElementById('logCountBadge');
+      badge.textContent = `${postureLogs.length} Events`;
+
+      if (postureLogs.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center text-soft-80 py-4">
+              <i class="bi bi-inbox fs-4 d-block mb-1 text-neon-cyan"></i>
+              No posture events recorded yet. Run a Demo Frame, click "Save Snapshot", or start monitoring.
+            </td>
+          </tr>`;
+        return;
+      }
+
+      tbody.innerHTML = postureLogs.slice(0, 15).map((item) => {
+        const isBad = String(item.status).includes('BAD');
+        const isGood = String(item.status).includes('GOOD');
+
+        const badgeClass = isBad ? 'flow-badge-bad' : isGood ? 'flow-badge-good' : 'flow-badge-neutral';
+        const dotClass = isBad ? 'status-dot-bad' : isGood ? 'status-dot-good' : 'status-dot-idle';
+
+        const timeFormatted = item.createdAt
+          ? new Date(item.createdAt).toLocaleTimeString()
+          : '--';
+
+        const snapHtml = item.snapshotUrl
+          ? `<a href="${item.snapshotUrl}" target="_blank" rel="noopener" title="Open full snapshot">
+               <img src="${item.snapshotUrl}" class="snapshot-thumb" alt="Posture Snapshot" />
+             </a>`
+          : '<span class="text-soft-80">--</span>';
+
+        return `
+          <tr>
+            <td class="ps-4 font-mono text-hi">${timeFormatted}</td>
+            <td>
+              <span class="flow-badge ${badgeClass} font-mono">
+                <span class="status-dot ${dotClass}"></span>
+                <span>${item.status || 'IDLE'}</span>
+              </span>
+            </td>
+            <td class="font-mono text-neon-cyan fw-semibold">${item.confidence ? item.confidence + '%' : '--%'}</td>
+            <td class="font-mono text-neon-amber">${item.slouchSeconds || 0}s</td>
+            <td>${snapHtml}</td>
+            <td class="pe-4 text-end text-soft-80 font-mono" style="font-size:0.74rem;">
+              <i class="bi bi-cloud-check text-neon-cyan me-1"></i>${item.syncSource || 'Cloud'}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // =========================================================================
+    // Colab Inference Helper
+    // =========================================================================
+    async function runColabInferenceOnBlob(jpegBlob) {
+      const endpoint = apiUrlInput ? apiUrlInput.value.trim().replace(/\/$/, '') : '';
+      const minConf = parseFloat(document.getElementById('confThreshold').value);
+
+      if (!endpoint || isProcessing || !jpegBlob) return;
+      isProcessing = true;
+      const startTime = performance.now();
+
+      try {
+        const formData = new FormData();
+        formData.append('file', jpegBlob, 'frame.jpg');
+
+        let response = await fetch(`${endpoint}/predict`, {
+          method: 'POST',
+          body: formData,
+          headers: { 'ngrok-skip-browser-warning': 'true' }
+        });
+
+        if (response.status === 404) {
+          response = await fetch(`${endpoint}/infer`, {
+            method: 'POST',
+            body: jpegBlob,
+            headers: {
+              'Content-Type': 'image/jpeg',
+              'ngrok-skip-browser-warning': 'true'
+            }
+          });
+        }
+
+        const data = await response.json();
+        const elapsed = Math.round(performance.now() - startTime);
+        latencyText.textContent = `${elapsed} ms`;
+
+        const now = performance.now();
+        const fps = Math.max(1, Math.round(1000 / (now - lastFrameTime)));
+        lastFrameTime = now;
+        fpsText.textContent = `${fps}`;
+        lastFrameTimeText.textContent = new Date().toLocaleTimeString();
+
+        colabNavStatus.textContent = 'Connected';
+        colabNavStatus.className = 'fw-bold text-neon-good';
+        if (colabDot) colabDot.className = 'status-dot status-dot-good';
+
+        let dets = [];
+        if (Array.isArray(data.detections)) {
+          dets = data.detections;
+        } else if (Array.isArray(data)) {
+          dets = data;
+        } else if (data && data.label && data.label !== 'none') {
+          dets = [{
+            name: data.label,
+            confidence: Number(data.confidence || 0.88),
+            xmin: 180,
+            ymin: 80,
+            xmax: 460,
+            ymax: 420
+          }];
+        }
+        renderDetections(dets, minConf);
+      } catch (err) {
+        console.error('Colab inference error:', err);
+        colabNavStatus.textContent = 'Unreachable';
+        colabNavStatus.className = 'fw-bold text-neon-crimson';
+        if (colabDot) colabDot.className = 'status-dot status-dot-bad';
+      } finally {
+        isProcessing = false;
+      }
+    }
+
+    function base64ToBlob(b64Data, contentType = 'image/jpeg') {
+      const cleanB64 = b64Data.includes(',') ? b64Data.split(',')[1] : b64Data;
+      const byteCharacters = atob(cleanB64);
+      const byteArrays = [];
+      for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+        const slice = byteCharacters.slice(offset, offset + 512);
+        const byteNumbers = new Array(slice.length);
+        for (let i = 0; i < slice.length; i++) {
+          byteNumbers[i] = slice.charCodeAt(i);
+        }
+        byteArrays.push(new Uint8Array(byteNumbers));
+      }
+      return new Blob(byteArrays, { type: contentType });
+    }
+
+    // =========================================================================
+    // Stream Modes & Settings Controls
+    // =========================================================================
+    function openSettingsModal(focusSection = 'gateway') {
+      const modalEl = document.getElementById('settingsModal');
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+      modal.show();
+      if (focusSection === 'firebase') {
+        setTimeout(() => document.getElementById('firebaseConfigInput').focus(), 250);
+      }
+    }
+
+    async function applyAllSettings() {
+      const fbRaw = document.getElementById('firebaseConfigInput').value.trim();
+      if (fbRaw) {
+        const parsed = parseFlexibleConfigInput(fbRaw);
+        if (isValidFirebaseConfig(parsed)) {
+          localStorage.setItem('postureai_firebase_config', JSON.stringify(parsed));
+          initFirebaseSystem(parsed);
+        }
+      }
+      configureColabEndpoint();
+      await saveUserSettingsToCloud();
+      const modalEl = document.getElementById('settingsModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) modal.hide();
+    }
+
+    function updateConfidenceDisplay(val) {
+      document.getElementById('confValue').textContent = `${Math.round(val * 100)}%`;
+    }
+
+    function handleSourceChange() {
+      const mode = feedSourceSelect.value;
+      const bleProvisionBox = document.getElementById('bleWifiProvisionWrapper');
+      if (bleProvisionBox) bleProvisionBox.classList.add('d-none');
+
+      if (mode === 'colab_gateway') {
+        espDirectInputWrapper.classList.add('d-none');
+        sourceHelpText.textContent = 'Receives live JPEG frames uploaded by your ESP32-S3-WROOM-1-N16R8 (POST /infer) via the Gateway/Colab /api/status endpoint.';
+        if (sourceIndicator) sourceIndicator.textContent = 'ESP32-S3 N16R8 Gateway';
+      } else if (mode === 'ble_direct') {
+        espDirectInputWrapper.classList.add('d-none');
+        if (bleProvisionBox) bleProvisionBox.classList.remove('d-none');
+        sourceHelpText.textContent = 'Pairs directly with PostureAI-ESP32S3 over Bluetooth Low Energy (BLE) — streams frames and posture telemetry wirelessly!';
+        if (sourceIndicator) sourceIndicator.textContent = 'ESP32-S3 Bluetooth BLE';
+      } else if (mode === 'usb_serial') {
+        espDirectInputWrapper.classList.add('d-none');
+        sourceHelpText.textContent = 'Connects directly to your ESP32 over USB cable (Web Serial API) — no Wi-Fi setup needed on the ESP32!';
+        if (sourceIndicator) sourceIndicator.textContent = 'ESP32 USB Cable';
+      } else if (mode === 'esp_direct') {
+        espDirectInputWrapper.classList.remove('d-none');
+        sourceHelpText.textContent = 'Fetches frames directly from ESP32 Hotspot (http://192.168.4.1/capture) or IP.';
+        if (sourceIndicator) sourceIndicator.textContent = 'ESP32 Direct Hotspot/IP';
+      } else if (mode === 'webcam') {
+        espDirectInputWrapper.classList.add('d-none');
+        sourceHelpText.textContent = 'Uses your Phone or Laptop built-in camera to test Google Colab YOLOv5 and Firebase logging.';
+        if (sourceIndicator) sourceIndicator.textContent = 'Phone/Laptop Camera';
+      } else {
+        espDirectInputWrapper.classList.add('d-none');
+        sourceHelpText.textContent = 'Listens to Firestore esp32_stream/latest where the ESP32 uploads frames over Wi-Fi.';
+        if (sourceIndicator) sourceIndicator.textContent = 'Firebase ESP32 Relay';
+      }
+      if (isStreaming) {
+        stopStream();
+      }
+    }
+
+    function configureColabEndpoint() {
+      const url = apiUrlInput.value.trim().replace(/\/$/, '');
+      if (!url) {
+        colabNavStatus.textContent = 'Not Set';
+        colabNavStatus.className = 'fw-bold text-hi';
+        if (colabDot) colabDot.className = 'status-dot status-dot-idle';
+        return;
+      }
+      colabNavStatus.textContent = 'Ready';
+      colabNavStatus.className = 'fw-bold text-neon-cyan';
+      if (colabDot) colabDot.className = 'status-dot status-dot-cyan';
+      saveUserSettingsToCloud();
+    }
+
+    async function toggleStream() {
+      if (isStreaming) {
+        stopStream();
+      } else {
+        await startStream();
+      }
+    }
+
+    async function startStream() {
+      const mode = feedSourceSelect.value;
+      const colabUrl = apiUrlInput ? apiUrlInput.value.trim().replace(/\/$/, '') : '';
+
+      if (colabUrl) {
+        configureColabEndpoint();
+        // Auto-wake YOLOv5 server on best available GPU when Live Cam turns on
+        fetch(`${colabUrl}/api/wakeup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+          body: JSON.stringify({ service: 'yolo' })
+        }).catch(() => {});
+      }
+
+      if (mode === 'ble_direct') {
+        if (!('bluetooth' in navigator)) {
+          alert('Web Bluetooth requires Chrome or Edge. Please use Chrome/Edge or select Gateway / Wi-Fi mode.');
+          return;
+        }
+        try {
+          await startEspBluetoothStream();
+        } catch (err) {
+          console.warn('Bluetooth pairing cancelled or failed:', err);
+        }
+        return;
+      }
+
+      if (mode === 'colab_gateway') {
+        if (!colabUrl) {
+          alert('Please enter your Gateway or Google Colab ngrok URL in Settings first (e.g. https://xxxx.ngrok-free.app or http://localhost:8000).');
+          openSettingsModal('gateway');
+          return;
+        }
+        video.classList.add('d-none');
+        espStreamImg.classList.remove('d-none');
+        streamPlaceholder.classList.add('d-none');
+        canvas.width = 640;
+        canvas.height = 480;
+        resText.textContent = '640x480';
+
+        setStreamingActive('Gateway Connected', 'ESP32-S3 N16R8');
+        pollColabGatewayStatusLoop();
+        return;
+      }
+
+      if (mode === 'usb_serial') {
+        if (!('serial' in navigator)) {
+          alert('Web Serial API requires Chrome or Edge on a Laptop/Desktop. On mobile, choose Firebase Cloud Relay or Phone/Laptop Camera.');
+          return;
+        }
+        try {
+          window.espSerialPort = await navigator.serial.requestPort();
+          await window.espSerialPort.open({ baudRate: 115200 });
+
+          video.classList.add('d-none');
+          espStreamImg.classList.remove('d-none');
+          streamPlaceholder.classList.add('d-none');
+          canvas.width = 640;
+          canvas.height = 480;
+          resText.textContent = '640x480';
+
+          setStreamingActive('USB Serial Live', 'ESP32 USB Connected');
+          readUsbSerialLoop();
+        } catch (err) {
+          alert('Could not open ESP32 USB port: ' + err.message);
+        }
+        return;
+      }
+
+      if (mode === 'webcam') {
+        if (!colabUrl) {
+          alert('Please enter your Google Colab ngrok HTTPS URL in Settings first.');
+          openSettingsModal('gateway');
+          return;
+        }
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 640 }, height: { ideal: 480 } }
+          });
+          video.srcObject = stream;
+          await video.play();
+
+          video.classList.remove('d-none');
+          espStreamImg.classList.add('d-none');
+          streamPlaceholder.classList.add('d-none');
+
+          canvas.width = video.videoWidth || 640;
+          canvas.height = video.videoHeight || 480;
+          resText.textContent = `${canvas.width}x${canvas.height}`;
+
+          setStreamingActive('Webcam Active', 'Local Cam');
+          requestAnimationFrame(webcamLoop);
+        } catch (err) {
+          alert('Unable to open local camera: ' + err.message);
+        }
+        return;
+      }
+
+      if (mode === 'firebase_relay') {
+        if (!fbDb && !fbRtdb) {
+          alert('Please configure your Firebase project in Settings first so the website can receive ESP32 frames from Firebase.');
+          openSettingsModal('firebase');
+          return;
+        }
+
+        video.classList.add('d-none');
+        espStreamImg.classList.remove('d-none');
+        streamPlaceholder.classList.add('d-none');
+        canvas.width = 640;
+        canvas.height = 480;
+        resText.textContent = '640x480';
+
+        setStreamingActive('Firebase Relay Live', 'ESP32 Listening');
+        startFirebaseRelayListener();
+        return;
+      }
+
+      const espUrl = espIpUrlInput.value.trim();
+      if (!espUrl) {
+        alert('Please enter the ESP32-CAM URL in Settings (e.g. http://192.168.1.100/capture).');
+        openSettingsModal('gateway');
+        return;
+      }
+
+      video.classList.add('d-none');
+      espStreamImg.classList.remove('d-none');
+      streamPlaceholder.classList.add('d-none');
+      canvas.width = 640;
+      canvas.height = 480;
+      resText.textContent = '640x480';
+
+      setStreamingActive('Direct Stream', 'ESP32 Active');
+      pollDirectEspLoop();
+    }
+
+    async function readUsbSerialLoop() {
+      const port = window.espSerialPort;
+      if (!port || !port.readable) return;
+
+      const textDecoder = new TextDecoderStream();
+      port.readable.pipeTo(textDecoder.writable);
+      const reader = textDecoder.readable.getReader();
+      window.espSerialReader = reader;
+
+      let lineBuffer = '';
+      try {
+        while (isStreaming) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          if (value) {
+            lineBuffer += value;
+            let newlineIdx;
+            while ((newlineIdx = lineBuffer.indexOf('\n')) !== -1) {
+              const line = lineBuffer.slice(0, newlineIdx).trim();
+              lineBuffer = lineBuffer.slice(newlineIdx + 1);
+              if (line.startsWith('FRAME:')) {
+                const b64 = line.substring(6).trim();
+                if (b64.length > 50) {
+                  await handleIncomingFirebaseFrame({ frame_base64: b64, width: 640, height: 480 });
+                }
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('USB Serial read ended:', err);
+      } finally {
+        try { reader.releaseLock(); } catch (_) {}
+      }
+    }
+
+    function startFirebaseRelayListener() {
+      if (fbDb) {
+        firestoreStreamUnsub = fbDb.collection('esp32_stream').doc('latest')
+          .onSnapshot(async (doc) => {
+            if (!isStreaming || !doc.exists) return;
+            const data = doc.data();
+            await handleIncomingFirebaseFrame(data);
+          }, (err) => {
+            console.warn('Firestore esp32_stream listener warning:', err);
+          });
+      }
+
+      if (fbRtdb) {
+        rtdbStreamRef = fbRtdb.ref('esp32_stream/latest');
+        rtdbStreamRef.on('value', async (snap) => {
+          if (!isStreaming || !snap.exists()) return;
+          const data = snap.val();
+          await handleIncomingFirebaseFrame(data);
+        });
+      }
+    }
+
+    async function handleIncomingFirebaseFrame(data) {
+      if (!data) return;
+      const b64 = data.frame_base64 || data.image || data.frame;
+      const imageUrl = data.frame_url || data.url;
+
+      espNavStatus.textContent = 'Receiving';
+      espNavStatus.className = 'fw-bold text-neon-good';
+      espNodePill.className = 'flow-badge flow-badge-good font-mono';
+      if (espDot) espDot.className = 'status-dot status-dot-good';
+      lastFrameTimeText.textContent = new Date().toLocaleTimeString();
+
+      if (data.width && data.height) {
+        canvas.width = data.width;
+        canvas.height = data.height;
+        resText.textContent = `${data.width}x${data.height}`;
+      }
+
+      if (Array.isArray(data.detections)) {
+        const minConf = parseFloat(document.getElementById('confThreshold').value);
+        renderDetections(data.detections, minConf);
+      }
+
+      if (b64) {
+        const dataUri = b64.startsWith('data:') ? b64 : `data:image/jpeg;base64,${b64}`;
+        espStreamImg.src = dataUri;
+
+        const colabUrl = apiUrlInput ? apiUrlInput.value.trim() : '';
+        if (colabUrl && !isProcessing) {
+          try {
+            const blob = base64ToBlob(b64);
+            await runColabInferenceOnBlob(blob);
+          } catch (e) {
+            console.warn('Failed to convert ESP32 base64 frame for Colab:', e);
+          }
+        }
+      } else if (imageUrl) {
+        espStreamImg.src = imageUrl;
+      }
+    }
+
+    async function pollColabGatewayStatusLoop() {
+      if (!isStreaming || feedSourceSelect.value !== 'colab_gateway') return;
+      const colabUrl = apiUrlInput ? apiUrlInput.value.trim().replace(/\/$/, '') : '';
+
+      if (colabUrl) {
+        try {
+          const resp = await fetch(`${colabUrl}/api/status`, {
+            cache: 'no-store',
+            headers: { 'ngrok-skip-browser-warning': 'true' }
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            colabNavStatus.textContent = 'Connected';
+            colabNavStatus.className = 'fw-bold text-neon-good';
+            if (colabDot) colabDot.className = 'status-dot status-dot-good';
+
+            if (data.frame_base64) {
+              espStreamImg.src = `data:image/jpeg;base64,${data.frame_base64}`;
+              if (data.width && data.height) {
+                canvas.width = data.width;
+                canvas.height = data.height;
+                resText.textContent = `${data.width}x${data.height}`;
+              }
+              latencyText.textContent = `${data.latency_ms || 0} ms`;
+              fpsText.textContent = `${data.fps || 3}`;
+              lastFrameTimeText.textContent = new Date().toLocaleTimeString();
+
+              const connected = Boolean(data.esp_connected);
+              espNavStatus.textContent = connected ? (data.device_id || 'Receiving') : 'Standby';
+              espNavStatus.className = connected ? 'fw-bold text-neon-good' : 'fw-bold text-neon-amber';
+              espNodePill.className = connected ? 'flow-badge flow-badge-good font-mono' : 'flow-badge flow-badge-amber font-mono';
+              if (espDot) espDot.className = connected ? 'status-dot status-dot-good' : 'status-dot status-dot-amber';
+
+              const minConf = parseFloat(document.getElementById('confThreshold').value);
+              renderDetections(data.detections || [], minConf);
+            }
+          }
+        } catch (err) {
+          console.warn('Gateway /api/status poll warning:', err);
+        }
+      }
+
+      if (isStreaming) {
+        directPollTimer = setTimeout(pollColabGatewayStatusLoop, 280);
+      }
+    }
+
+    async function pollDirectEspLoop() {
+      if (!isStreaming || feedSourceSelect.value !== 'esp_direct') return;
+      const espUrl = espIpUrlInput.value.trim();
+
+      try {
+        const resp = await fetch(`${espUrl}${espUrl.includes('?') ? '&' : '?'}t=${Date.now()}`, { cache: 'no-store' });
+        if (resp.ok) {
+          const blob = await resp.blob();
+          const objUrl = URL.createObjectURL(blob);
+          espStreamImg.onload = () => URL.revokeObjectURL(objUrl);
+          espStreamImg.src = objUrl;
+          await runColabInferenceOnBlob(blob);
+        }
+      } catch (_) {
+        if (!espStreamImg.src || !espStreamImg.src.startsWith(espUrl)) {
+          espStreamImg.src = espUrl;
+        }
+      }
+
+      if (isStreaming) {
+        directPollTimer = setTimeout(pollDirectEspLoop, 250);
+      }
+    }
+
+    function setStreamingActive(connText, espText) {
+      isStreaming = true;
+      btnToggle.className = 'btn-neon-danger small py-2 px-3';
+      btnToggle.innerHTML = '<i class="bi bi-stop-circle-fill"></i><span>Stop Monitor</span>';
+
+      if (connectionBadge) connectionBadge.textContent = connText;
+      if (espBadge) espBadge.textContent = espText;
+
+      espNavStatus.textContent = 'Listening';
+      espNavStatus.className = 'fw-bold text-neon-good';
+      espNodePill.className = 'flow-badge flow-badge-good font-mono';
+      if (espDot) espDot.className = 'status-dot status-dot-good';
+
+      livePill.className = 'flow-badge flow-badge-good font-mono';
+      liveStatusText.textContent = 'LIVE';
+      liveDot.className = 'status-dot status-dot-good';
+
+      startTimer();
+    }
+
+    function stopStream() {
+      if (video.srcObject) {
+        video.srcObject.getTracks().forEach(t => t.stop());
+      }
+      if (directPollTimer) {
+        clearTimeout(directPollTimer);
+        directPollTimer = null;
+      }
+      if (firestoreStreamUnsub) {
+        firestoreStreamUnsub();
+        firestoreStreamUnsub = null;
+      }
+      if (rtdbStreamRef) {
+        rtdbStreamRef.off();
+        rtdbStreamRef = null;
+      }
+      if (window.espSerialReader) {
+        try { window.espSerialReader.cancel(); } catch (_) {}
+        window.espSerialReader = null;
+      }
+      if (window.espSerialPort) {
+        try { window.espSerialPort.close(); } catch (_) {}
+        window.espSerialPort = null;
+      }
+
+      isStreaming = false;
+      isProcessing = false;
+      espStreamImg.classList.add('d-none');
+      video.classList.add('d-none');
+      streamPlaceholder.classList.remove('d-none');
+
+      btnToggle.className = 'btn-neon-primary small py-2 px-3';
+      btnToggle.innerHTML = '<i class="bi bi-play-circle-fill"></i><span>Start Monitor</span>';
+
+      if (connectionBadge) connectionBadge.textContent = 'Gateway Offline';
+      if (espBadge) espBadge.textContent = 'ESP32: Standby';
+
+      espNavStatus.textContent = 'Standby';
+      espNavStatus.className = 'fw-bold text-neon-amber';
+      espNodePill.className = 'flow-badge flow-badge-amber font-mono';
+      if (espDot) espDot.className = 'status-dot status-dot-amber';
+
+      livePill.className = 'flow-badge flow-badge-neutral font-mono';
+      liveStatusText.textContent = 'STANDBY';
+      liveDot.className = 'status-dot status-dot-idle';
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      resetStatus();
+      clearInterval(timerInterval);
+    }
+
+    function resetStatus() {
+      applyBiofeedbackUI('idle', null);
+      detectionCount.textContent = '0';
+      latencyText.textContent = '-- ms';
+      fpsText.textContent = '--';
+      badPostureSeconds = 0;
+      slouchTimer.textContent = '0s';
+    }
+
+    // =========================================================================
+    // Bluetooth Low Energy (BLE) Streaming & Wi-Fi Provisioning
+    // =========================================================================
+    const BLE_SERVICE_UUID     = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
+    const BLE_FRAME_CHAR_UUID  = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
+    const BLE_CMD_CHAR_UUID    = 'beb5483e-36e1-4688-b7f5-ea07361b26a9';
+    const BLE_STATUS_CHAR_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26aa';
+
+    let bleDevice = null;
+    let bleCmdChar = null;
+    let bleFrameChunks = [];
+
+    async function startEspBluetoothStream() {
+      bleDevice = await navigator.bluetooth.requestDevice({
+        filters: [{ namePrefix: 'PostureAI' }],
+        optionalServices: [BLE_SERVICE_UUID]
+      });
+
+      const server = await bleDevice.gatt.connect();
+      const service = await server.getPrimaryService(BLE_SERVICE_UUID);
+      bleCmdChar = await service.getCharacteristic(BLE_CMD_CHAR_UUID);
+      const frameChar = await service.getCharacteristic(BLE_FRAME_CHAR_UUID);
+      const statusChar = await service.getCharacteristic(BLE_STATUS_CHAR_UUID);
+
+      video.classList.add('d-none');
+      espStreamImg.classList.remove('d-none');
+      streamPlaceholder.classList.add('d-none');
+      canvas.width = 640;
+      canvas.height = 480;
+      resText.textContent = '640x480';
+
+      setStreamingActive('BLE Connected', 'ESP32-S3 BLE');
+
+      await frameChar.startNotifications();
+      frameChar.addEventListener('characteristicvaluechanged', async (event) => {
+        const val = new Uint8Array(event.target.value.buffer);
+        const ascii = new TextDecoder().decode(val);
+        if (ascii.startsWith('START:')) {
+          bleFrameChunks = [];
+          return;
+        }
+        if (ascii === 'END') {
+          if (bleFrameChunks.length > 0) {
+            const blob = new Blob(bleFrameChunks, { type: 'image/jpeg' });
+            bleFrameChunks = [];
+            const objUrl = URL.createObjectURL(blob);
+            espStreamImg.onload = () => URL.revokeObjectURL(objUrl);
+            espStreamImg.src = objUrl;
+            lastFrameTimeText.textContent = new Date().toLocaleTimeString();
+            await runColabInferenceOnBlob(blob);
+          }
+          return;
+        }
+        bleFrameChunks.push(val);
+      });
+
+      await statusChar.startNotifications();
+      statusChar.addEventListener('characteristicvaluechanged', (event) => {
+        try {
+          const info = JSON.parse(new TextDecoder().decode(event.target.value.buffer));
+          const minConf = parseFloat(document.getElementById('confThreshold').value);
+          if (info.state === 'SITTING_BAD') {
+            renderDetections([{ name: 'sitting_bad', confidence: info.conf || 0.92, xmin: 180, ymin: 80, xmax: 460, ymax: 420 }], minConf);
+          } else if (info.state === 'SITTING_GOOD') {
+            renderDetections([{ name: 'sitting_good', confidence: info.conf || 0.95, xmin: 180, ymin: 80, xmax: 460, ymax: 420 }], minConf);
+          }
+        } catch (_) {}
+      });
+    }
+
+    async function sendWifiOverBluetooth() {
+      const ssid = document.getElementById('bleWifiSsid').value.trim();
+      const pass = document.getElementById('bleWifiPass').value;
+      if (!ssid) return;
+      if (!bleCmdChar) {
+        await startEspBluetoothStream();
+      }
+      if (bleCmdChar) {
+        await bleCmdChar.writeValue(new TextEncoder().encode(`WIFI:${ssid}:${pass}`));
+        alert(`Sent Wi-Fi '${ssid}' to ESP32-S3 over Bluetooth!`);
+      }
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        const currentLabel = postureText.textContent || '';
+        if (currentLabel.includes('SLOUCH') || currentLabel.includes('BAD')) {
+          badPostureSeconds++;
+          slouchTimer.textContent = `${badPostureSeconds}s`;
+          const miniSlouch = document.getElementById('miniSlouchTime');
+          if (miniSlouch) miniSlouch.textContent = `${badPostureSeconds}s`;
+          if (badPostureSeconds >= 5 && audioToggle.checked) {
+            triggerBeep();
+          }
+          syncHardwareAlertToFirebase(true, badPostureSeconds);
+
+          const now = Date.now();
+          if (badPostureSeconds >= 5 && autoCloudSaveToggle.checked && (now - lastAutoSnapshotTime > 15000)) {
+            lastAutoSnapshotTime = now;
+            captureCloudSnapshot(false);
+          }
+        } else {
+          if (badPostureSeconds > 0) {
+            syncHardwareAlertToFirebase(false, 0);
+          }
+          badPostureSeconds = 0;
+          slouchTimer.textContent = '0s';
+          const miniSlouch = document.getElementById('miniSlouchTime');
+          if (miniSlouch) miniSlouch.textContent = '0s';
+        }
+      }, 1000);
+    }
+
+    function triggerBeep() {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(740, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.16);
+      } catch (err) {
+        console.warn('Audio autoplay policy prevented beep:', err);
+      }
+    }
+
+    async function webcamLoop() {
+      if (!isStreaming || feedSourceSelect.value !== 'webcam') return;
+
+      const endpoint = apiUrlInput ? apiUrlInput.value.trim().replace(/\/$/, '') : '';
+      if (endpoint && !isProcessing) {
+        const offscreen = document.createElement('canvas');
+        offscreen.width = canvas.width;
+        offscreen.height = canvas.height;
+        offscreen.getContext('2d').drawImage(video, 0, 0);
+
+        offscreen.toBlob(async (blob) => {
+          if (blob) {
+            await runColabInferenceOnBlob(blob);
+          }
+        }, 'image/jpeg', 0.65);
+      }
+
+      requestAnimationFrame(webcamLoop);
+    }
+
+    // Demo simulation to preview ESP32 frames + YOLOv5 bounding boxes + Spring-Physics Skeletal Biofeedback
+    function simulateEspFrame() {
+      streamPlaceholder.classList.add('d-none');
+      video.classList.add('d-none');
+      espStreamImg.classList.remove('d-none');
+
+      canvas.width = 640;
+      canvas.height = 480;
+      resText.textContent = '640x480';
+
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = 640;
+      tempCanvas.height = 480;
+      const tCtx = tempCanvas.getContext('2d');
+
+      const grad = tCtx.createLinearGradient(0, 0, 640, 480);
+      grad.addColorStop(0, '#030508');
+      grad.addColorStop(1, '#0A0F1E');
+      tCtx.fillStyle = grad;
+      tCtx.fillRect(0, 0, 640, 480);
+
+      tCtx.strokeStyle = 'rgba(0, 240, 255, 0.06)';
+      tCtx.lineWidth = 1;
+      for (let x = 0; x < 640; x += 40) {
+        tCtx.beginPath();
+        tCtx.moveTo(x, 0);
+        tCtx.lineTo(x, 480);
+        tCtx.stroke();
+      }
+      for (let y = 0; y < 480; y += 40) {
+        tCtx.beginPath();
+        tCtx.moveTo(0, y);
+        tCtx.lineTo(640, y);
+        tCtx.stroke();
+      }
+
+      demoBadToggle = !demoBadToggle;
+
+      // Stylized silhouette matching posture state
+      tCtx.fillStyle = 'rgba(148, 163, 184, 0.36)';
+      tCtx.beginPath();
+      if (demoBadToggle) {
+        tCtx.arc(348, 178, 44, 0, Math.PI * 2);
+      } else {
+        tCtx.arc(320, 152, 44, 0, Math.PI * 2);
+      }
+      tCtx.fill();
+      tCtx.fillRect(252, 222, 136, 188);
+
+      tCtx.fillStyle = '#00F0FF';
+      tCtx.font = '13px "Share Tech Mono", monospace';
+      tCtx.fillText(`ESP32-S3-WROOM-1-N16R8 [OV5640] | ${new Date().toLocaleTimeString()} | DEMO`, 18, 28);
+
+      espStreamImg.onload = () => {
+        const mockDetections = demoBadToggle
+          ? [{ name: 'sitting_bad', confidence: 0.94, xmin: 215, ymin: 112, xmax: 432, ymax: 420 }]
+          : [{ name: 'sitting_good', confidence: 0.97, xmin: 222, ymin: 96, xmax: 418, ymax: 420 }];
+
+        latencyText.textContent = '114 ms';
+        fpsText.textContent = '12';
+        lastFrameTimeText.textContent = new Date().toLocaleTimeString();
+
+        espNavStatus.textContent = 'Simulated';
+        espNavStatus.className = 'fw-bold text-neon-cyan';
+        espNodePill.className = 'flow-badge flow-badge-cyan font-mono';
+        if (espDot) espDot.className = 'status-dot status-dot-cyan';
+
+        livePill.className = 'flow-badge flow-badge-cyan font-mono';
+        liveStatusText.textContent = 'DEMO FEED';
+        liveDot.className = 'status-dot status-dot-cyan';
+
+        const minConf = parseFloat(document.getElementById('confThreshold').value);
+        renderDetections(mockDetections, minConf);
+        captureCloudSnapshot(false);
+      };
+
+      espStreamImg.src = tempCanvas.toDataURL('image/jpeg');
+    }
+
+    function renderDetections(detections, minConf) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const filtered = detections.filter(d => d.confidence >= minConf);
+      if (window.PostureMotion) {
+        window.PostureMotion.animateCounter(detectionCount, filtered.length, { durationMs: 320 });
+      } else {
+        detectionCount.textContent = filtered.length;
+      }
+
+      let foundBad = false;
+      let foundGood = false;
+      let highestConf = 0;
+
+      filtered.forEach(det => {
+        if (det.confidence > highestConf) highestConf = det.confidence;
+
+        const nameLower = det.name.toLowerCase();
+        const isBad = nameLower.includes('bad') || nameLower.includes('slouch');
+        if (isBad) foundBad = true;
+        else foundGood = true;
+
+        const color = isBad ? '#FF2A6D' : '#00F0FF';
+        const shadowColor = isBad ? 'rgba(255, 42, 109, 0.55)' : 'rgba(0, 240, 255, 0.48)';
+        const labelInk = isBad ? '#FFFFFF' : '#05070B';
+
+        ctx.save();
+        ctx.shadowColor = shadowColor;
+        ctx.shadowBlur = 12;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2.6;
+        ctx.strokeRect(det.xmin, det.ymin, det.xmax - det.xmin, det.ymax - det.ymin);
+        ctx.restore();
+
+        // Corner accent brackets
+        const cornerLen = 15;
+        ctx.strokeStyle = isBad ? '#FFE600' : '#00F0FF';
+        ctx.lineWidth = 2.5;
+
+        ctx.beginPath();
+        ctx.moveTo(det.xmin, det.ymin + cornerLen);
+        ctx.lineTo(det.xmin, det.ymin);
+        ctx.lineTo(det.xmin + cornerLen, det.ymin);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(det.xmax - cornerLen, det.ymin);
+        ctx.lineTo(det.xmax, det.ymin);
+        ctx.lineTo(det.xmax, det.ymin + cornerLen);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(det.xmin, det.ymax - cornerLen);
+        ctx.lineTo(det.xmin, det.ymax);
+        ctx.lineTo(det.xmin + cornerLen, det.ymax);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(det.xmax - cornerLen, det.ymax);
+        ctx.lineTo(det.xmax, det.ymax);
+        ctx.lineTo(det.xmax, det.ymax - cornerLen);
+        ctx.stroke();
+
+        // High-contrast WCAG pill tag on canvas
+        const tagText = `${det.name.toUpperCase()} ${(det.confidence * 100).toFixed(0)}%`;
+        ctx.font = "13px 'Share Tech Mono', monospace";
+        const textWidth = ctx.measureText(tagText).width;
+
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.roundRect(det.xmin, Math.max(0, det.ymin - 25), textWidth + 18, 22, 6);
+        ctx.fill();
+
+        ctx.fillStyle = labelInk;
+        ctx.fillText(tagText, det.xmin + 9, Math.max(16, det.ymin - 9));
+      });
+
+      if (filtered.length > 0) {
+        const pct = Math.round(highestConf * 100);
+        if (foundBad) {
+          badFrameCount++;
+          applyBiofeedbackUI('sitting_bad', pct);
+        } else if (foundGood) {
+          goodFrameCount++;
+          applyBiofeedbackUI('sitting_good', pct);
+        }
+
+        const totalClassified = goodFrameCount + badFrameCount;
+        if (totalClassified > 0) {
+          const goodPct = Math.round((goodFrameCount / totalClassified) * 100);
+          if (window.PostureMotion) {
+            window.PostureMotion.animateCounter(goodRateValue, goodPct, { suffix: '%', durationMs: 500 });
+          } else {
+            goodRateValue.textContent = `${goodPct}%`;
+          }
+          const miniScore = document.getElementById('miniPostureScore');
+          if (miniScore) miniScore.textContent = `${goodPct}%`;
+
+          // Sync live YOLO daily back score to Firestore for Result Analyze (analytics.html)
+          if (fbDb && currentUser && totalClassified % 10 === 0) {
+            const todayKey = new Date().toISOString().slice(0, 10);
+            fbDb.collection('posture_analytics').doc(currentUser.uid).collection('daily').doc(todayKey).set({
+              date: todayKey,
+              back_score: goodPct,
+              good_frames: goodFrameCount,
+              bad_frames: badFrameCount,
+              slouch_events: badFrameCount,
+              avg_confidence: pct,
+              updated_at: new Date().toISOString()
+            }, { merge: true }).catch(() => {});
+          }
+        }
+      } else {
+        applyBiofeedbackUI('no_target', null);
+      }
+
+      // Sync Cyberpunk Mini Widget
+      const miniStatus = document.getElementById('miniPostureStatus');
+      const miniDot = document.getElementById('miniWidgetDot');
+      if (miniStatus) {
+        miniStatus.textContent = postureText.textContent;
+        miniStatus.className = foundBad
+          ? 'fw-bold font-mono text-neon-crimson'
+          : foundGood
+            ? 'fw-bold font-mono text-neon-good'
+            : 'fw-bold font-mono text-neon-cyan';
+      }
+      if (miniDot) {
+        miniDot.className = foundBad
+          ? 'status-dot status-dot-bad'
+          : foundGood
+            ? 'status-dot status-dot-good'
+            : 'status-dot status-dot-cyan';
+      }
+    }
+
+    function toggleMinimizeMode(minimize) {
+      const miniWidget = document.getElementById('miniFloatingWidget');
+      if (minimize) {
+        document.body.classList.add('minimized-mode');
+        if (miniWidget) miniWidget.classList.remove('d-none');
+      } else {
+        document.body.classList.remove('minimized-mode');
+        if (miniWidget) miniWidget.classList.add('d-none');
+      }
+    }
+
+    async function popOutPictureInPicture() {
+      try {
+        if ('documentPictureInPicture' in window) {
+          const pipWin = await window.documentPictureInPicture.requestWindow({ width: 350, height: 185 });
+          const style = pipWin.document.createElement('style');
+          style.textContent = `
+            body { margin: 0; padding: 14px; background: #030508; color: #f8fafc; font-family: 'Share Tech Mono', monospace; }
+            .box { background: rgba(10,15,30,0.88); border: 1px solid #00F0FF; border-radius: 14px; padding: 12px; }
+            .title { font-size: 11px; color: #00F0FF; margin-bottom: 4px; letter-spacing: 0.08em; }
+            .status { font-size: 18px; font-weight: 700; }
+          `;
+          pipWin.document.head.appendChild(style);
+          pipWin.document.body.innerHTML = `
+            <div class="box">
+              <div class="title">SANDY // LIVE BIOMONITOR</div>
+              <div class="status" id="pipStatus">${postureText.textContent}</div>
+              <div style="font-size:13px; margin-top:6px; color:#00FF66;">GOOD RATE: <span id="pipScore">${goodRateValue.textContent}</span></div>
+            </div>
+          `;
+          setInterval(() => {
+            if (pipWin.closed) return;
+            const s = pipWin.document.getElementById('pipStatus');
+            const sc = pipWin.document.getElementById('pipScore');
+            if (s) s.textContent = postureText.textContent;
+            if (sc) sc.textContent = goodRateValue.textContent;
+          }, 800);
+          return;
+        }
+        if (video && video.srcObject && document.pictureInPictureEnabled) {
+          await video.requestPictureInPicture();
+          return;
+        }
+        toggleMinimizeMode(true);
+      } catch (_) {
+        toggleMinimizeMode(true);
+      }
+    }
+
+    // Initialize visualizers, saved local settings & Firebase on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.PostureMotion && typeof window.PostureMotion.initParticleRodBackground === 'function') { window.PostureMotion.initParticleRodBackground(); }
+      const spineAngleEl = document.getElementById('spineAngleLive');
+      if (window.PostureMotion) {
+        dashSkeleton = new window.PostureMotion.PostureSkeletonModel('#dashboardSkeletonMount', {
+          compact: true,
+          onAngleUpdate(evalInfo) {
+            if (spineAngleEl && evalInfo) {
+              spineAngleEl.textContent = `${evalInfo.tiltDisplay} • ${evalInfo.modeLabel}`;
+            }
+          }
+        });
+        dashSkeleton.setState('idle');
+        dashWaveform = new window.PostureMotion.FrequencyWaveform740('#dashboardWaveformCanvas');
+      }
+
+      if (window.BACKEND_CONFIG && window.BACKEND_CONFIG.colabApiUrl && apiUrlInput) {
+        apiUrlInput.value = window.BACKEND_CONFIG.colabApiUrl;
+        configureColabEndpoint();
+      }
+
+      try {
+        const localSettings = JSON.parse(localStorage.getItem('postureai_user_settings') || '{}');
+        if (localSettings.colab_url) {
+          apiUrlInput.value = localSettings.colab_url;
+          configureColabEndpoint();
+        }
+        if (typeof localSettings.confidence_threshold === 'number') {
+          document.getElementById('confThreshold').value = localSettings.confidence_threshold;
+          updateConfidenceDisplay(localSettings.confidence_threshold);
+        }
+        if (typeof localSettings.audio_enabled === 'boolean') audioToggle.checked = localSettings.audio_enabled;
+        if (typeof localSettings.esp_alert_enabled === 'boolean') espAlertToggle.checked = localSettings.esp_alert_enabled;
+        if (typeof localSettings.auto_save_snapshots === 'boolean') autoCloudSaveToggle.checked = localSettings.auto_save_snapshots;
+      } catch (_) {}
+
+      initFirebaseSystem();
+    });
+  </script>
+</body>
+</html>

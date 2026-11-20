@@ -1,0 +1,5 @@
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+Pillow>=10,<13
+# For real YOLOv5 inference install torch + the dependencies in your cloned YOLOv5
+# repository (see README). Mock mode does not require torch/GPU.

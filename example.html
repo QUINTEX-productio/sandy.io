@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Biofeedback Lab | Sandy - Interactive Posture Simulator</title>
+
+  <!-- Google Fonts: Rajdhani, Inter & Share Tech Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5 CSS & Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+  <!-- Sandy Unified Cyberpunk Night City Design System -->
+  <link rel="stylesheet" href="posture-glass.css" />
+</head>
+<body class="d-flex flex-column min-vh-100" style="background-color: #030508;">
+  <canvas id="particleRodCanvas" class="particle-rod-canvas" aria-hidden="true"></canvas>
+
+  <!-- Posture-Mode Vector Symbol Sprite -->
+  <svg width="0" height="0" style="position: absolute; overflow: hidden;" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="sym-lying" viewBox="0 0 24 24">
+        <circle cx="4.6" cy="11" r="2.4" fill="currentColor"/>
+        <rect x="8" y="9" width="13.5" height="4" rx="2" fill="currentColor"/>
+        <path d="M2 16.5 H22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </symbol>
+      <symbol id="sym-upright" viewBox="0 0 24 24">
+        <path d="M12 2 V22" fill="none" stroke="currentColor" stroke-width="1" opacity="0.55"/>
+        <rect x="9" y="2.8" width="6" height="3.4" rx="1.2" fill="currentColor"/>
+        <rect x="9" y="7.7" width="6" height="3.4" rx="1.2" fill="currentColor"/>
+        <rect x="9" y="12.6" width="6" height="3.4" rx="1.2" fill="currentColor"/>
+        <rect x="9" y="17.5" width="6" height="3.4" rx="1.2" fill="currentColor"/>
+      </symbol>
+      <symbol id="sym-caution" viewBox="0 0 24 24">
+        <path d="M12 2.8 L21.6 19.6 H2.4 Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>
+        <path d="M12 8.4 L12 13.9" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/>
+        <circle cx="12" cy="16.7" r="1.35" fill="currentColor"/>
+      </symbol>
+      <symbol id="sym-glitch" viewBox="0 0 24 24">
+        <path d="M14.5 2 L5 13.5 H11 L9.5 22 L19 10 H13 Z" fill="currentColor"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <div class="page-layer d-flex flex-column min-vh-100 position-relative z-1">
+    <!-- =================================================================== -->
+    <!-- UNIFIED PROFESSIONAL TOP NAVIGATION BAR                             -->
+    <!-- =================================================================== -->
+    <header class="glass-nav py-2 px-3 px-lg-4 mb-4">
+      <div class="container-fluid d-flex align-items-center justify-content-between flex-wrap gap-3 py-1">
+        <!-- Brand -->
+        <a href="index.html" class="d-inline-flex align-items-center gap-3 text-decoration-none">
+          <span class="brand-mark">
+            <i class="bi bi-person-bounding-box"></i>
+          </span>
+          <div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="fw-bold text-hi fs-5 font-display" style="letter-spacing: 0.05em;">Sandy</span>
+              <span class="flow-badge flow-badge-magenta font-mono">BIOFEEDBACK LAB</span>
+            </div>
+            <div class="text-soft-80" style="font-size: 0.75rem;">Interactive Spinal Kinematics &amp; 740 Hz Acoustic Simulator</div>
+          </div>
+        </a>
+
+        <!-- Restructured Primary Navigation Tabs -->
+        <nav class="d-flex align-items-center flex-wrap gap-2" aria-label="Primary Navigation">
+          <a href="index.html" class="btn-glass-subtle small py-1 px-3">
+            <i class="bi bi-house-door text-neon-cyan"></i>
+            <span>Home</span>
+          </a>
+          <a href="Interface.html" class="btn-glass-subtle small py-1 px-3">
+            <i class="bi bi-camera-video text-neon-cyan"></i>
+            <span>Live Monitor</span>
+          </a>
+          <a href="analytics.html" class="btn-glass-subtle small py-1 px-3">
+            <i class="bi bi-pie-chart-fill text-neon-cyan"></i>
+            <span>Result Analyze</span>
+          </a>
+          <a href="ai-chat.html" class="btn-glass-subtle small py-1 px-3">
+            <i class="bi bi-stars text-neon-cyan"></i>
+            <span>AI Coach</span>
+          </a>
+          <a href="example.html" class="btn-glass-secondary small py-1 px-3" style="border-color: rgba(0, 240, 255, 0.65);">
+            <i class="bi bi-activity text-neon-cyan"></i>
+            <span>Biofeedback Lab</span>
+          </a>
+        </nav>
+
+        <!-- Account & Action Controls (Replaced by Circular PFP Dropdown when Signed In) -->
+        <div id="sandyNavAuthSlot" class="d-flex align-items-center flex-wrap gap-2">
+          <div id="navSignedOutGroup" class="d-flex align-items-center flex-wrap gap-2">
+            <a href="signin.html?next=example.html" class="btn-glass-subtle small py-1 px-3">
+              <i class="bi bi-box-arrow-in-right text-neon-cyan"></i>
+              <span>Sign In</span>
+            </a>
+            <a href="signup.html?next=example.html" class="btn-neon-primary small py-1 px-3">
+              <i class="bi bi-person-plus-fill"></i>
+              <span>Sign Up</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- =================================================================== -->
+    <!-- MAIN BIOFEEDBACK SIMULATOR WORKSPACE                                -->
+    <!-- =================================================================== -->
+    <main class="container-fluid px-3 px-lg-4 mb-5 flex-grow-1">
+      <div class="row g-4">
+
+        <!-- Left Column: Interactive Skeletal Twin & Bidirectional Slider -->
+        <div class="col-xl-7 col-lg-7">
+          <div class="glass-card h-100 d-flex flex-column" id="analysisCard">
+            <div class="glass-header-bar">
+              <div class="d-flex align-items-center flex-wrap gap-2">
+                <i class="bi bi-activity text-neon-cyan fs-5"></i>
+                <span class="fw-bold text-hi">Interactive Spinal Biofeedback Simulator</span>
+                <span class="flow-badge flow-badge-cyan posture-state-pill font-mono" id="postureStatusBadge">
+                  <svg id="postureStatusSymbol" class="posture-sym sym-cyan me-1" aria-hidden="true"><use href="#sym-upright"></use></svg>
+                  <span id="postureBadgeTag">sitting_good</span>
+                </span>
+              </div>
+              <span class="flow-badge flow-badge-cyan degree-readout-pill font-mono tabular-nums" id="spineAngleChip">
+                <i class="bi bi-compass"></i>
+                <span id="spineAngleLive" class="tabular-nums">0&deg; &bull; OPTIMAL</span>
+              </span>
+            </div>
+
+            <div class="p-3 p-lg-4 d-flex flex-column gap-3 flex-grow-1">
+              <!-- Quick Bidirectional Posture Presets -->
+              <div class="d-flex align-items-center flex-wrap gap-2">
+                <button type="button" id="exPresetLying" class="preset-tab-btn font-mono" onclick="jumpExDegrees(-90)">Lying -90&deg;</button>
+                <button type="button" id="exPresetGood" class="preset-tab-btn font-mono active-cyan" onclick="jumpExDegrees(0)">Optimal 0&deg;</button>
+                <button type="button" id="exPresetWarn" class="preset-tab-btn font-mono" onclick="jumpExDegrees(25)">Caution +25&deg;</button>
+                <button type="button" id="exPresetBad" class="preset-tab-btn font-mono" onclick="jumpExDegrees(60)">Slouch +60&deg;</button>
+              </div>
+
+              <!-- Articulated Human Silhouette Stage -->
+              <div class="skeleton-stage flex-grow-1" id="exSkeletonStage" style="min-height: 310px;">
+                <div id="exampleSkeletonMount" aria-label="Interactive articulated spine silhouette from -90 to +90 degrees"></div>
+              </div>
+
+              <!-- Bidirectional Ergonomic Slider -->
+              <div class="glass-subpanel p-3">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                  <label for="exPostureSlider" class="small fw-bold text-hi mb-0">
+                    <i class="bi bi-sliders2 text-neon-cyan me-1"></i>Bidirectional Posture Slider
+                  </label>
+                  <span class="flow-badge flow-badge-magenta font-mono" style="font-size: 0.70rem;">
+                    -90&deg; &larr; 0&deg; &rarr; +90&deg;
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  class="posture-degree-range"
+                  id="exPostureSlider"
+                  min="-90"
+                  max="90"
+                  step="1"
+                  value="0"
+                  oninput="handleExDegreeSlider(this.value)"
+                />
+                <div class="slider-zone-track-strip d-flex mt-2 mb-2">
+                  <div class="zone-strip-segment strip-cyan" style="width: 58.33%;"><span>-90&deg; &rarr; +15&deg; OPTIMAL / REST</span></div>
+                  <div class="zone-strip-segment strip-yellow" style="width: 11.11%;"><span>+16&deg;..+35&deg; CAUTION</span></div>
+                  <div class="zone-strip-segment strip-red" style="width: 30.56%;"><span>+36&deg;..+90&deg; SLOUCH</span></div>
+                </div>
+                <div class="d-flex justify-content-between flex-wrap gap-1 mt-1 font-mono" style="font-size: 0.68rem;">
+                  <span class="text-neon-cyan fw-semibold">-90&deg;..-30&deg; Lying</span>
+                  <span class="text-neon-cyan fw-semibold">-29&deg;..+15&deg; Optimal</span>
+                  <span class="text-neon-yellow">+16&deg;..+35&deg; Caution</span>
+                  <span class="text-neon-crimson fw-semibold">+36&deg;..+90&deg; Slouch</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Biometric HUD, ST7789 LCD Preview & 740 Hz Waveform -->
+        <div class="col-xl-5 col-lg-5 d-flex flex-column gap-4">
+
+          <!-- Biometric Telemetry Banner Card -->
+          <div class="glass-card p-3 p-lg-4 d-flex flex-column gap-3">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <h4 class="fw-bold mb-0 font-mono text-neon-good" id="exPostureText">GOOD POSTURE</h4>
+              <span class="flow-badge flow-badge-cyan font-mono" id="exConfidenceChip">96% CONF</span>
+            </div>
+
+            <p class="text-body-88 small mb-0" id="exPostureDesc">
+              Optimal upright range (-29&deg; to +15&deg;). Neutral spine, 90&deg; knees &amp; grounded feet.
+            </p>
+
+            <div class="cyber-hud-banner hud-state-calm" id="exCyberHud" role="status" aria-live="polite">
+              <div class="cyber-hud-top-row">
+                <span class="d-inline-flex align-items-center gap-1">
+                  <i class="bi bi-check-circle-fill" id="exCyberHudIcon"></i>
+                  <span id="exCyberHudSub">SANDY BIOMONITOR // TELEMETRY NOMINAL</span>
+                </span>
+                <span class="cyber-hud-code" id="exCyberHudCode">SITTING_GOOD</span>
+              </div>
+              <span class="cyber-hud-main-text" id="exCyberHudText">SPINAL VECTOR ALIGNED // NOMINAL BIOMETRICS ENFORCED</span>
+            </div>
+          </div>
+
+          <!-- ST7789 SPI Hardware LCD Preview -->
+          <div class="glass-card p-3">
+            <div id="exSt7789Frame" class="st7789-display-frame st7789-state-optimal p-3">
+              <div class="d-flex align-items-center justify-content-between mb-2 pb-1 border-bottom border-secondary border-opacity-25 font-mono">
+                <span class="text-hi fw-bold" style="font-size: 0.78rem;">ST7789 SPI HUD // 240x240 LCD</span>
+                <span id="exLcdStatus" class="fw-bold" style="font-size: 0.74rem; color: #00F0FF;">NOMINAL // OPTIMAL</span>
+              </div>
+              <div class="row g-2 align-items-center">
+                <div class="col-5 text-center">
+                  <div class="text-soft-80 small" style="font-size: 0.68rem;">SPINE INCLINE</div>
+                  <div id="exLcdAngle" class="display-6 fw-bold font-mono" style="color: #00F0FF;">0&deg;</div>
+                </div>
+                <div class="col-7">
+                  <div class="p-2 rounded font-mono" style="background: rgba(3,5,8,0.75); border: 1px solid rgba(255,255,255,0.08); font-size: 0.72rem;">
+                    <div class="d-flex justify-content-between mb-1">
+                      <span class="text-soft-80">PIEZO BUZZER:</span>
+                      <strong id="exLcdPiezo" style="color: #00F0FF;">QUIET</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                      <span class="text-soft-80">HARDWARE LINK:</span>
+                      <strong class="text-neon-cyan">ESP32-S3 SPI</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 740 Hz Acoustic Biofeedback Waveform Card -->
+          <div class="glass-card p-3 d-flex flex-column gap-3">
+            <div class="waveform-box" id="exWaveBox">
+              <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-1">
+                <span class="font-mono fw-semibold text-body-88" style="font-size: 0.76rem;">
+                  <i class="bi bi-soundwave text-neon-cyan me-1" id="exWaveIcon"></i>740 Hz Acoustic Biofeedback
+                </span>
+                <span id="exWaveLabel" class="font-mono text-soft-80" style="font-size: 0.72rem;">Quiet Standby</span>
+              </div>
+              <canvas id="exampleWaveformCanvas" style="width: 100%; height: 48px; display: block;"></canvas>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <button type="button" class="btn-glass-secondary small py-2 px-3" onclick="test740HzTone()">
+                <i class="bi bi-volume-up-fill text-neon-amber"></i>
+                <span>Test 740 Hz Chime</span>
+              </button>
+              <a href="Interface.html" class="btn-neon-primary small py-2 px-3 text-decoration-none">
+                <i class="bi bi-camera-video-fill"></i>
+                <span>Go to Live Monitor</span>
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Bootstrap 5, GSAP, Firebase & Shared Sandy Nav -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="posture-motion.js"></script>
+  <script src="sandy-nav.js"></script>
+
+  <script>
+    let exSkeleton = null;
+    let exWaveform = null;
+    let audioCtx = null;
+
+    function test740HzTone() {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(740, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.18);
+      } catch (_) {}
+    }
+
+    function updateExampleUI(deg) {
+      const info = window.PostureMotion ? window.PostureMotion.evaluatePostureDegrees(deg) : null;
+      const isBad = deg > 35;
+      const isWarn = deg > 15 && deg <= 35;
+      const isLying = deg <= -30;
+
+      const slider = document.getElementById('exPostureSlider');
+      if (slider) {
+        slider.style.setProperty('--thumb-accent', isBad ? '#FF2A6D' : isWarn ? '#FFE600' : '#00F0FF');
+      }
+
+      if (exWaveform) exWaveform.setAlertActive(isBad, isWarn);
+
+      ['exPresetLying', 'exPresetGood', 'exPresetWarn', 'exPresetBad'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.className = 'preset-tab-btn font-mono';
+      });
+      if (isLying) document.getElementById('exPresetLying').classList.add('active-cyan');
+      else if (isWarn) document.getElementById('exPresetWarn').classList.add('active-yellow');
+      else if (isBad) document.getElementById('exPresetBad').classList.add('active-crimson');
+      else document.getElementById('exPresetGood').classList.add('active-cyan');
+
+      const accent = isBad ? '#FF2A6D' : isWarn ? '#FFE600' : '#00F0FF';
+      const titleEl = document.getElementById('exPostureText');
+      const descEl = document.getElementById('exPostureDesc');
+      const hud = document.getElementById('exCyberHud');
+      const hudSub = document.getElementById('exCyberHudSub');
+      const hudCode = document.getElementById('exCyberHudCode');
+      const hudText = document.getElementById('exCyberHudText');
+      const badge = document.getElementById('postureStatusBadge');
+      const badgeTag = document.getElementById('postureBadgeTag');
+      const lcdAngle = document.getElementById('exLcdAngle');
+      const lcdStatus = document.getElementById('exLcdStatus');
+      const lcdPiezo = document.getElementById('exLcdPiezo');
+      const waveLabel = document.getElementById('exWaveLabel');
+
+      if (lcdAngle) {
+        lcdAngle.textContent = `${deg > 0 ? '+' + deg : deg}°`;
+        lcdAngle.style.color = accent;
+      }
+
+      if (isBad) {
+        titleEl.textContent = 'SEVERE SLOUCH';
+        titleEl.className = 'fw-bold mb-0 font-mono text-neon-crimson';
+        descEl.textContent = info ? info.summary : 'Severe forward flexion (+36° to +90°). Realign spine and shoulders.';
+        hud.className = 'cyber-hud-banner hud-state-critical';
+        hudSub.textContent = 'POSTURE ALERT // SEVERE KYPHOTIC SLOUCH';
+        hudCode.textContent = 'SITTING_BAD';
+        hudText.textContent = 'SLOUCH THRESHOLD EXCEEDED // 740 HZ ACOUSTIC FEEDBACK ARMED';
+        badge.className = 'flow-badge flow-badge-bad posture-state-pill font-mono';
+        badgeTag.textContent = 'sitting_bad';
+        lcdStatus.textContent = 'ALERT // SLOUCH';
+        lcdStatus.style.color = '#FF2A6D';
+        lcdPiezo.textContent = '740 Hz ACTIVE';
+        lcdPiezo.style.color = '#FF2A6D';
+        waveLabel.textContent = '740 Hz Alert Active';
+      } else if (isWarn) {
+        titleEl.textContent = 'CAUTION SLOUCH';
+        titleEl.className = 'fw-bold mb-0 font-mono text-neon-yellow';
+        descEl.textContent = info ? info.summary : 'Moderate forward drift (+16° to +35°). Gently lift your chest.';
+        hud.className = 'cyber-hud-banner hud-state-warn';
+        hudSub.textContent = 'ERGONOMIC ADVISORY // DEBOUNCE BUFFER ACTIVE';
+        hudCode.textContent = 'SITTING_CAUTION';
+        hudText.textContent = 'POSTURAL DRIFT DETECTED // CERVICAL STRAIN ELEVATING';
+        badge.className = 'flow-badge flow-badge-yellow posture-state-pill font-mono';
+        badgeTag.textContent = 'sitting_caution';
+        lcdStatus.textContent = 'DRIFT // CAUTION';
+        lcdStatus.style.color = '#FFE600';
+        lcdPiezo.textContent = 'STANDBY';
+        lcdPiezo.style.color = '#FFE600';
+        waveLabel.textContent = 'Pre-Threshold';
+      } else if (isLying) {
+        titleEl.textContent = 'LYING DOWN';
+        titleEl.className = 'fw-bold mb-0 font-mono text-neon-cyan';
+        descEl.textContent = info ? info.summary : 'Reclined rest mode (-90° to -30°). Spine supported cleanly.';
+        hud.className = 'cyber-hud-banner hud-state-calm';
+        hudSub.textContent = 'NEURAL REST PROTOCOL // ZERO SPINAL STRAIN';
+        hudCode.textContent = 'LYING_DOWN';
+        hudText.textContent = 'RECLINED REST MODE ACTIVE // ZERO POSTURE ALERTS';
+        badge.className = 'flow-badge flow-badge-cyan posture-state-pill font-mono';
+        badgeTag.textContent = 'lying_down';
+        lcdStatus.textContent = 'REST // RECLINED';
+        lcdStatus.style.color = '#00F0FF';
+        lcdPiezo.textContent = 'QUIET';
+        lcdPiezo.style.color = '#00F0FF';
+        waveLabel.textContent = 'Rest Standby';
+      } else {
+        titleEl.textContent = 'GOOD POSTURE';
+        titleEl.className = 'fw-bold mb-0 font-mono text-neon-good';
+        descEl.textContent = info ? info.summary : 'Optimal upright range (-29° to +15°). Neutral spine alignment.';
+        hud.className = 'cyber-hud-banner hud-state-calm';
+        hudSub.textContent = 'SANDY BIOMONITOR // TELEMETRY NOMINAL';
+        hudCode.textContent = 'SITTING_GOOD';
+        hudText.textContent = 'SPINAL VECTOR ALIGNED // NOMINAL BIOMETRICS ENFORCED';
+        badge.className = 'flow-badge flow-badge-good posture-state-pill font-mono';
+        badgeTag.textContent = 'sitting_good';
+        lcdStatus.textContent = 'NOMINAL // OPTIMAL';
+        lcdStatus.style.color = '#00F0FF';
+        lcdPiezo.textContent = 'QUIET';
+        lcdPiezo.style.color = '#00F0FF';
+        waveLabel.textContent = 'Quiet Standby';
+      }
+    }
+
+    function jumpExDegrees(deg) {
+      document.getElementById('exPostureSlider').value = deg;
+      if (exSkeleton) exSkeleton.setDegrees(deg, true);
+      updateExampleUI(deg);
+    }
+
+    function handleExDegreeSlider(val) {
+      const deg = Number(val);
+      if (exSkeleton) exSkeleton.setDegrees(deg, false);
+      updateExampleUI(deg);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.PostureMotion && typeof window.PostureMotion.initParticleRodBackground === 'function') {
+        window.PostureMotion.initParticleRodBackground();
+      }
+      const spineAngleEl = document.getElementById('spineAngleLive');
+      if (window.PostureMotion) {
+        exSkeleton = new window.PostureMotion.PostureSkeletonModel('#exampleSkeletonMount', {
+          compact: false,
+          onAngleUpdate(evalInfo) {
+            if (spineAngleEl && evalInfo) {
+              spineAngleEl.textContent = `${evalInfo.tiltDisplay} • ${evalInfo.modeLabel}`;
+            }
+          }
+        });
+        exSkeleton.setDegrees(0, false);
+        exWaveform = new window.PostureMotion.FrequencyWaveform740('#exampleWaveformCanvas');
+      }
+      updateExampleUI(0);
+    });
+  </script>
+</body>
+</html>
