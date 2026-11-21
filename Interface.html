@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sandy | Live Cloud &amp; Hardware Ergonomics Monitor</title>
+  <title>Sandy</title>
 
   <!-- Google Fonts: Rajdhani, Inter & Share Tech Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1621,8 +1621,8 @@
     function createCompositeSnapshotBlob() {
       return new Promise((resolve) => {
         const snapCanvas = document.createElement('canvas');
-        snapCanvas.width = canvas.width || 640;
-        snapCanvas.height = canvas.height || 480;
+        snapCanvas.width = 360;
+        snapCanvas.height = 270;
         const sCtx = snapCanvas.getContext('2d');
 
         if (!video.classList.contains('d-none') && video.readyState >= 2) {
@@ -1655,23 +1655,11 @@
       const cloudIndicator = document.getElementById('cloudSyncIndicator');
       cloudIndicator.innerHTML = '<span class="spinner-border spinner-border-sm text-neon-cyan" style="width:12px;height:12px;"></span><span>Uploading to Firebase...</span>';
 
-      const { blob, dataUrl } = await createCompositeSnapshotBlob();
-      let snapshotUrl = dataUrl;
-      let syncSource = 'Local Session';
+      const { dataUrl } = await createCompositeSnapshotBlob();
+      const snapshotUrl = dataUrl;
+      const syncSource = fbDb ? 'Cloud Firestore (Free Spark)' : 'Local Session';
 
       const uid = currentUser ? currentUser.uid : 'anonymous';
-      const ts = Date.now();
-
-      if (fbStorage && blob) {
-        try {
-          const storageRef = fbStorage.ref(`snapshots/${uid}/posture_${ts}.jpg`);
-          const uploadSnap = await storageRef.put(blob, { contentType: 'image/jpeg' });
-          snapshotUrl = await uploadSnap.ref.getDownloadURL();
-          syncSource = 'Firebase Storage + Firestore';
-        } catch (err) {
-          console.warn('Firebase Storage upload fallback to dataURL:', err);
-        }
-      }
 
       const logEntry = {
         uid: uid,
@@ -2716,6 +2704,9 @@
 
     function toggleMinimizeMode(minimize) {
       const miniWidget = document.getElementById('miniFloatingWidget');
+      if (window.SandyDesktop && typeof window.SandyDesktop.toggleMiniMode === 'function') {
+        window.SandyDesktop.toggleMiniMode(minimize);
+      }
       if (minimize) {
         document.body.classList.add('minimized-mode');
         if (miniWidget) miniWidget.classList.remove('d-none');

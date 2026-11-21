@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sign Up | Sandy - Autonomous Spinal Telemetry</title>
+  <title>Sandy</title>
 
   <!-- Google Fonts: Rajdhani, Inter & Share Tech Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -60,6 +60,11 @@
     .step-pill.active {
       background: #00F0FF;
       box-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
+    }
+    .req-star {
+      color: #FF2A6D;
+      font-weight: 700;
+      margin-left: 2px;
     }
   </style>
 </head>
@@ -144,49 +149,73 @@
             </div>
 
             <form id="signUpForm" onsubmit="handleSignUpSubmit(event)" class="d-flex flex-column gap-3">
-              <!-- Display Name & Username -->
+              <!-- Display Name & Username (Matched Identical Input Styling) -->
               <div class="row g-2">
                 <div class="col-sm-6">
-                  <label for="regDisplayName" class="form-label text-hi small fw-semibold mb-1">Display Name *</label>
+                  <label for="regDisplayName" class="form-label text-hi small fw-semibold mb-1">Display Name<span class="req-star">*</span></label>
                   <input type="text" id="regDisplayName" class="form-control glass-input small" placeholder="e.g. Alex Rivera" required />
                 </div>
                 <div class="col-sm-6">
-                  <label for="regUsername" class="form-label text-hi small fw-semibold mb-1">Username *</label>
-                  <div class="input-group input-group-sm">
-                    <span class="input-group-text glass-input font-mono text-neon-cyan">@</span>
-                    <input type="text" id="regUsername" class="form-control glass-input small font-mono" placeholder="alex_r" required />
-                  </div>
+                  <label for="regUsername" class="form-label text-hi small fw-semibold mb-1">Username<span class="req-star">*</span></label>
+                  <input type="text" id="regUsername" class="form-control glass-input small" placeholder="e.g. @alex_r" required />
                 </div>
               </div>
 
               <!-- Email -->
               <div>
-                <label for="regEmail" class="form-label text-hi small fw-semibold mb-1">Email Address *</label>
+                <label for="regEmail" class="form-label text-hi small fw-semibold mb-1">Email Address<span class="req-star">*</span></label>
                 <input type="email" id="regEmail" class="form-control glass-input small" placeholder="you@gmail.com" required />
               </div>
 
-              <!-- Birth Date & Gender -->
-              <div class="row g-2">
-                <div class="col-sm-6">
-                  <label for="regDob" class="form-label text-hi small fw-semibold mb-1">Date of Birth *</label>
-                  <input type="date" id="regDob" class="form-control glass-input small" required />
+              <!-- Birth Date (Month / Day / Year Dropdowns) & Gender -->
+              <div>
+                <label class="form-label text-hi small fw-semibold mb-1">Date of Birth<span class="req-star">*</span></label>
+                <div class="row g-2">
+                  <div class="col-5">
+                    <select id="regDobMonth" class="form-select glass-input small" onchange="populateDobDays()" required>
+                      <option value="" disabled selected>Month</option>
+                      <option value="01">January</option>
+                      <option value="02">February</option>
+                      <option value="03">March</option>
+                      <option value="04">April</option>
+                      <option value="05">May</option>
+                      <option value="06">June</option>
+                      <option value="07">July</option>
+                      <option value="08">August</option>
+                      <option value="09">September</option>
+                      <option value="10">October</option>
+                      <option value="11">November</option>
+                      <option value="12">December</option>
+                    </select>
+                  </div>
+                  <div class="col-3">
+                    <select id="regDobDay" class="form-select glass-input small" required>
+                      <option value="" disabled selected>Day</option>
+                    </select>
+                  </div>
+                  <div class="col-4">
+                    <select id="regDobYear" class="form-select glass-input small" onchange="populateDobDays()" required>
+                      <option value="" disabled selected>Year</option>
+                    </select>
+                  </div>
                 </div>
-                <div class="col-sm-6">
-                  <label for="regGender" class="form-label text-hi small fw-semibold mb-1">Gender *</label>
-                  <select id="regGender" class="form-select glass-input small" required>
-                    <option value="" disabled selected>Select gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Non-binary">Non-binary</option>
-                    <option value="Prefer not to say">Prefer not to say</option>
-                  </select>
-                </div>
+              </div>
+
+              <div>
+                <label for="regGender" class="form-label text-hi small fw-semibold mb-1">Gender<span class="req-star">*</span></label>
+                <select id="regGender" class="form-select glass-input small" required>
+                  <option value="" disabled selected>Select gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Non-binary">Non-binary</option>
+                  <option value="Prefer not to say">Prefer not to say</option>
+                </select>
               </div>
 
               <!-- Password & Confirm Password (Hidden automatically when signing up via Gmail) -->
               <div id="passwordFieldsWrap" class="d-flex flex-column gap-3">
                 <div>
-                  <label for="regPassword" class="form-label text-hi small fw-semibold mb-1">Password *</label>
+                  <label for="regPassword" class="form-label text-hi small fw-semibold mb-1">Password<span class="req-star">*</span></label>
                   <input type="password" id="regPassword" class="form-control glass-input small" placeholder="Create a strong password (6+ chars)" oninput="updateStrengthMeter(this.value)" required />
                   <div class="strength-bars">
                     <div class="strength-seg" id="str1"></div>
@@ -196,7 +225,7 @@
                   </div>
                 </div>
                 <div>
-                  <label for="regConfirmPassword" class="form-label text-hi small fw-semibold mb-1">Confirm Password *</label>
+                  <label for="regConfirmPassword" class="form-label text-hi small fw-semibold mb-1">Confirm Password<span class="req-star">*</span></label>
                   <input type="password" id="regConfirmPassword" class="form-control glass-input small" placeholder="Re-enter your password" required />
                 </div>
               </div>
@@ -205,8 +234,12 @@
               <div class="form-check mt-1">
                 <input class="form-check-input" type="checkbox" id="regTosCheck" required />
                 <label class="form-check-label text-soft-80 small" for="regTosCheck">
-                  I agree to the <span class="text-neon-cyan">Sandy Terms of Service</span> and Privacy Policy.
+                  I agree to the <span class="text-neon-cyan">Sandy Terms of Service</span> and Privacy Policy.<span class="req-star">*</span>
                 </label>
+              </div>
+
+              <div class="text-soft-80 small" style="font-size: 0.76rem;">
+                <span class="req-star">*</span> means required
               </div>
 
               <button type="submit" id="btnSubmitSignUp" class="btn-neon-primary py-2 mt-1">
@@ -462,9 +495,17 @@
       const displayName = document.getElementById('regDisplayName').value.trim();
       const username = document.getElementById('regUsername').value.trim().replace(/^@/, '');
       const email = document.getElementById('regEmail').value.trim();
-      const dob = document.getElementById('regDob').value;
+      const dobY = document.getElementById('regDobYear').value;
+      const dobM = document.getElementById('regDobMonth').value;
+      const dobD = document.getElementById('regDobDay').value;
+      const dob = (dobY && dobM && dobD) ? `${dobY}-${dobM}-${dobD}` : '';
       const gender = document.getElementById('regGender').value;
       const tosChecked = document.getElementById('regTosCheck').checked;
+
+      if (!dob) {
+        showAuthError('Please select your Month, Day, and Year of birth.');
+        return;
+      }
 
       if (!tosChecked) {
         showAuthError('Please agree to the Terms of Service to continue.');
@@ -604,7 +645,39 @@
       }
     }
 
+    function populateDobYears() {
+      const ySel = document.getElementById('regDobYear');
+      if (!ySel) return;
+      const currentYear = new Date().getFullYear();
+      for (let y = currentYear - 5; y >= 1930; y--) {
+        const opt = document.createElement('option');
+        opt.value = String(y);
+        opt.textContent = String(y);
+        ySel.appendChild(opt);
+      }
+    }
+
+    function populateDobDays() {
+      const dSel = document.getElementById('regDobDay');
+      const mVal = parseInt(document.getElementById('regDobMonth').value, 10) || 1;
+      const yVal = parseInt(document.getElementById('regDobYear').value, 10) || 2000;
+      if (!dSel) return;
+      const prev = dSel.value;
+      const maxDays = new Date(yVal, mVal, 0).getDate();
+      dSel.innerHTML = '<option value="" disabled selected>Day</option>';
+      for (let d = 1; d <= maxDays; d++) {
+        const opt = document.createElement('option');
+        const val = String(d).padStart(2, '0');
+        opt.value = val;
+        opt.textContent = String(d);
+        if (val === prev) opt.selected = true;
+        dSel.appendChild(opt);
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
+      populateDobYears();
+      populateDobDays();
       if (window.PostureMotion && typeof window.PostureMotion.initParticleRodBackground === 'function') {
         window.PostureMotion.initParticleRodBackground();
       }

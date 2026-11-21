@@ -8,7 +8,7 @@
 #endif
 // Example after local setup: "http://192.168.x.y:8000" (NOT localhost) or ngrok URL.
 #ifndef POSTURE_AI_BASE_URL
-#define POSTURE_AI_BASE_URL "https://plastic-smudgy-occupant.ngrok-free.dev"
+#define POSTURE_AI_BASE_URL ""
 #endif
 #ifndef POSTURE_API_TOKEN
 #define POSTURE_API_TOKEN ""

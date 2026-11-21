@@ -1,0 +1,30 @@
+# Hardware & Local Secrets
+**/secrets.h
+.env
+.env.local
+
+# Large AI Model Weights (Never push to GitHub — 100MB limit)
+*.pt
+*.gguf
+*.onnx
+*.bin
+
+# Runtime Logs & Local Analytics Cache
+yolo_analytics_store.json
+*.log
+
+# Python & Virtual Environments
+**/__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# OS, Windows App Build & Editor Junk
+windows-app/node_modules/
+windows-app/dist/
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

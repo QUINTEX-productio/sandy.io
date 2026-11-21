@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Profile &amp; Account | Sandy</title>
+  <title>Sandy</title>
 
   <!-- Google Fonts: Rajdhani, Inter & Share Tech Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -645,25 +645,14 @@
           const sx = (img.width - minSide) / 2;
           const sy = (img.height - minSide) / 2;
           ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
-          const dataUrl = c.toDataURL('image/jpeg', 0.85);
+          const dataUrl = c.toDataURL('image/jpeg', 0.78);
 
-          let finalUrl = dataUrl;
-          try {
-            if (fbStorage) {
-              const ref = fbStorage.ref(`avatars/${currentUser.uid}.jpg`);
-              await ref.putString(dataUrl, 'data_url');
-              finalUrl = await ref.getDownloadURL();
-            }
-          } catch (_) {}
-
-          userProfile.photoURL = finalUrl;
+          // 100% Free Firebase Spark Plan: save compact 256x256 JPEG directly in Firestore + localStorage (no Firebase Storage subscription needed)
+          userProfile.photoURL = dataUrl;
           localStorage.setItem('sandy_user_profile', JSON.stringify(userProfile));
           try {
-            if (finalUrl.startsWith('http')) {
-              await currentUser.updateProfile({ photoURL: finalUrl });
-            }
             if (fbDb) {
-              await fbDb.collection('users').doc(currentUser.uid).set({ photoURL: finalUrl }, { merge: true });
+              await fbDb.collection('users').doc(currentUser.uid).set({ photoURL: dataUrl }, { merge: true });
             }
           } catch (_) {}
 

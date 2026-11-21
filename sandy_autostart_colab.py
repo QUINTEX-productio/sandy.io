@@ -264,10 +264,47 @@ def record_daily_metric(cid: int, conf: float):
 
 
 # ============================================================================
-# FastAPI App
+# FastAPI App + Security Hardening (Rate Limit, Input Caps, Security Headers)
 # ============================================================================
+ALLOWED_ORIGINS = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "*").split(",") if o.strip()]
+MAX_IMAGE_BYTES = 5 * 1024 * 1024  # 5 MB max image upload
+RATE_LIMIT_WINDOW_SEC = 60
+AI_RATE_LIMIT_MAX = 25             # Max 25 AI prompts/min per IP (protects A100 GPU)
+_ip_hits: dict[str, list[float]] = {}
+
 app = FastAPI(title="Sandy AutoStart Unified Server (YOLOv5 + Qwen3.6-35B)")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+)
+
+
+@app.middleware("http")
+async def security_and_rate_limit_middleware(request: Request, call_next):
+    # 1. Rate-limit expensive LLM endpoints (/api/chat, /api/ai-analyze)
+    if request.url.path in ("/api/chat", "/api/ai-analyze"):
+        client_ip = request.headers.get("cf-connecting-ip") or request.headers.get("x-forwarded-for") or (request.client.host if request.client else "unknown")
+        now = time.time()
+        hits = [t for t in _ip_hits.get(client_ip, []) if now - t < RATE_LIMIT_WINDOW_SEC]
+        if len(hits) >= AI_RATE_LIMIT_MAX:
+            return JSONResponse(status_code=429, content={"ok": False, "error": "Too many requests. Please wait a moment."})
+        hits.append(now)
+        _ip_hits[client_ip] = hits
+
+    # 2. Enforce max payload size on image uploads
+    cl = request.headers.get("content-length")
+    if cl and cl.isdigit() and int(cl) > MAX_IMAGE_BYTES:
+        return JSONResponse(status_code=413, content={"ok": False, "error": "Payload too large (max 5 MB)."})
+
+    response = await call_next(request)
+    # 3. Standard HTTP security headers
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return response
 
 
 class WakeupRequest(BaseModel):
@@ -339,7 +376,7 @@ def api_chat(req: AiChatRequest):
         return {"ok": False, "answer": "Qwen3.6-35B is starting up on Colab GPU. Please retry in a few seconds!", "engine": "Starting..."}
     sys_msg = f"{SANDY_STRICT_SYSTEM_PROMPT}\n\nUSER CONTEXT:\n- Today Back Score: {req.current_score}/100\n- Goal: {req.user_goal}\n- Medical Notes: {req.medical_notes}"
     msgs = [{"role": "system", "content": sys_msg}] + [
-        {"role": ("assistant" if m.role == "assistant" else "user"), "content": m.content}
+        {"role": ("assistant" if m.role == "assistant" else "user"), "content": m.content[:1000]}
         for m in req.messages[-10:]
     ]
     r = requests.post(LLAMA_SERVER_URL, json={"model": "Qwen3.6-35B-A3B-UD-Q4_K_M.gguf", "messages": msgs, "max_tokens": 450, "temperature": 0.5}, timeout=60)

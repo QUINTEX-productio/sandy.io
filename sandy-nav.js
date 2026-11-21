@@ -181,12 +181,31 @@
     }
   }
 
+  function escapeHtml(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function sanitizeImageUrl(url) {
+    const s = String(url || '').trim();
+    if (!s) return '';
+    if (s.startsWith('https://') || s.startsWith('http://') || s.startsWith('data:image/')) {
+      return escapeHtml(s);
+    }
+    return '';
+  }
+
   function buildProfileDropdown(user, profileData) {
-    const displayName = (profileData && profileData.displayName) || (user && user.displayName) || (user && user.email ? user.email.split('@')[0] : 'Sandy User');
-    const usernameRaw = (profileData && profileData.username) || (user && user.email ? user.email.split('@')[0] : 'user');
-    const username = usernameRaw.startsWith('@') ? usernameRaw : '@' + usernameRaw;
-    const photoUrl = (profileData && profileData.photoURL) || (user && user.photoURL) || '';
-    const initials = displayName.trim().slice(0, 2).toUpperCase() || 'SY';
+    const rawDisplay = (profileData && profileData.displayName) || (user && user.displayName) || (user && user.email ? user.email.split('@')[0] : 'Sandy User');
+    const rawUser = (profileData && profileData.username) || (user && user.email ? user.email.split('@')[0] : 'user');
+    const displayName = escapeHtml(rawDisplay);
+    const username = escapeHtml(rawUser.startsWith('@') ? rawUser : '@' + rawUser);
+    const photoUrl = sanitizeImageUrl((profileData && profileData.photoURL) || (user && user.photoURL) || '');
+    const initials = escapeHtml(rawDisplay.trim().slice(0, 2).toUpperCase() || 'SY');
 
     const wrap = document.createElement('div');
     wrap.className = 'sandy-pfp-wrap';
@@ -261,13 +280,87 @@
     return wrap;
   }
 
+  // 1B. OS Detection (Apple iOS/macOS allowed on Web; Windows/Android/Linux use Native App)
+  function detectOS() {
+    const ua = navigator.userAgent || '';
+    const platform = navigator.platform || '';
+    if (/android/i.test(ua)) return 'android';
+    if (/iPad|iPhone|iPod/.test(ua) || (platform === 'MacIntel' && navigator.maxTouchPoints > 1)) return 'ios';
+    if (/Mac/i.test(platform) || /Macintosh|Mac OS X/i.test(ua)) return 'macos';
+    if (/Win/i.test(platform) || /Windows/i.test(ua)) return 'windows';
+    return 'linux';
+  }
+
+  function isWebInterfaceAllowed() {
+    // Allowed if running inside our native Windows/Android/Linux app shell OR on Apple iOS/macOS web
+    if (window.SandyDesktop || window.SandyNativeApp) return true;
+    const os = detectOS();
+    return os === 'ios' || os === 'macos';
+  }
+
+  function enforcePlatformAppGate() {
+    if (isWebInterfaceAllowed()) return;
+    const page = (window.location.pathname || '').split('/').pop().toLowerCase();
+    const webAppOnlyPages = ['interface.html', 'analytics.html', 'ai-chat.html'];
+    if (!webAppOnlyPages.includes(page)) return;
+
+    const os = detectOS();
+    const osLabel = os === 'windows' ? 'Windows' : os === 'android' ? 'Android' : 'Linux';
+    const osIcon = os === 'windows' ? 'bi-windows' : os === 'android' ? 'bi-android2' : 'bi-terminal';
+
+    if (document.getElementById('sandyOsGateOverlay')) return;
+    const gate = document.createElement('div');
+    gate.id = 'sandyOsGateOverlay';
+    gate.style.cssText = 'position:fixed; inset:0; z-index:10001; background:rgba(3,5,8,0.96); backdrop-filter:blur(16px); display:flex; align-items:center; justify-content:center; padding:1.25rem;';
+    gate.innerHTML = `
+      <div class="glass-card p-4 p-sm-5 text-center" style="max-width:500px; width:100%; border:1px solid rgba(0,240,255,0.5); box-shadow:0 24px 60px rgba(0,0,0,0.9);">
+        <div class="mb-3">
+          <span class="flow-badge flow-badge-cyan font-mono">
+            <i class="bi ${osIcon}"></i>
+            <span>${osLabel.toUpperCase()} DETECTED</span>
+          </span>
+        </div>
+        <h3 class="fw-bold text-hi font-display mb-2">Use the Sandy App on ${osLabel}</h3>
+        <p class="text-body-88 small mb-4">
+          The web interface is reserved for Apple (iOS &amp; macOS) devices. On <strong>${osLabel}</strong>, please download the native Sandy app for full ESP32-S3, YOLOv5, and AI Coach performance!
+        </p>
+        <div class="d-grid gap-2">
+          <a href="download.html" class="btn-neon-primary py-2 text-decoration-none">
+            <i class="bi ${osIcon} me-1"></i>
+            <span>Download Sandy for ${osLabel}</span>
+          </a>
+          <a href="example.html" class="btn-glass-secondary py-2 text-decoration-none">
+            <i class="bi bi-activity text-neon-pink me-1"></i>
+            <span>Try Web Biofeedback Demo</span>
+          </a>
+          <a href="index.html" class="btn-glass-subtle py-2 text-decoration-none small">
+            <i class="bi bi-house-door me-1"></i>
+            <span>Back to Home</span>
+          </a>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(gate);
+    const mainEl = document.querySelector('main');
+    if (mainEl) mainEl.style.display = 'none';
+  }
+
   function updateInterfaceVisibilityForGuests(isSignedIn) {
-    // Hide Live Monitor (Interface.html) & Result Analyze (analytics.html) nav links for guests
-    // so visitors without an account only see the landing layout (index.html) and Demo (example.html).
+    const canUseWebInterface = isWebInterfaceAllowed();
+    // Hide Live Monitor / Result Analyze / AI Coach on non-Apple browsers OR when signed out
     document.querySelectorAll('a[href="Interface.html"], a[href*="Interface.html"], a[href="analytics.html"], a[href="ai-chat.html"]').forEach((link) => {
       const href = link.getAttribute('href') || '';
       if (href.startsWith('signin.html') || href.startsWith('signup.html')) return;
-      link.style.display = isSignedIn ? '' : 'none';
+      link.style.display = (isSignedIn && canUseWebInterface) ? '' : 'none';
+    });
+
+    // Always highlight Download button on Windows / Android / Linux browsers
+    document.querySelectorAll('a[href="download.html"]').forEach((dl) => {
+      if (window.SandyDesktop || window.SandyNativeApp) {
+        dl.style.display = 'none';
+      } else {
+        dl.style.display = '';
+      }
     });
   }
 
@@ -318,6 +411,7 @@
 
   function initSandyNav() {
     applyLayoutPreferences();
+    enforcePlatformAppGate();
     // Hide Interface.html links by default until Firebase confirms a signed-in account
     updateInterfaceVisibilityForGuests(false);
 
@@ -352,6 +446,8 @@
   }
 
   window.SandyNav = {
+    detectOS,
+    isWebInterfaceAllowed,
     applyLayoutPreferences,
     refreshAvatar: renderNavAvatar
   };

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sandy</title>
+
+  <!-- Google Fonts: Rajdhani, Inter & Share Tech Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5 CSS & Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+  <!-- Sandy Unified Cyberpunk Night City Design System -->
+  <link rel="stylesheet" href="posture-glass.css" />
+
+  <style>
+    .download-hero-card {
+      background: linear-gradient(135deg, rgba(0, 240, 255, 0.10) 0%, rgba(10, 15, 30, 0.85) 60%, rgba(255, 0, 127, 0.08) 100%);
+      border: 1px solid rgba(0, 240, 255, 0.38);
+      border-radius: 22px;
+      padding: 2.2rem;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.72), 0 0 36px rgba(0, 240, 255, 0.12);
+    }
+    .os-download-card {
+      background: rgba(10, 15, 30, 0.76);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 1.75rem;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .os-download-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(0, 240, 255, 0.55);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.65), 0 0 28px rgba(0, 240, 255, 0.16);
+    }
+    .os-download-card.os-recommended {
+      border-color: #00F0FF;
+      box-shadow: 0 18px 46px rgba(0, 0, 0, 0.7), 0 0 32px rgba(0, 240, 255, 0.22);
+    }
+    .os-icon-badge {
+      width: 58px;
+      height: 58px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.85rem;
+      margin-bottom: 1rem;
+    }
+    .os-spec-list {
+      list-style: none;
+      padding: 0;
+      margin: 0.75rem 0 1.4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      font-size: 0.82rem;
+      color: #CBD5E1;
+    }
+    .os-spec-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .os-spec-list i {
+      color: #00F0FF;
+      font-size: 0.88rem;
+    }
+  </style>
+</head>
+<body class="d-flex flex-column min-vh-100" style="background-color: #030508;">
+  <canvas id="particleRodCanvas" class="particle-rod-canvas" aria-hidden="true"></canvas>
+
+  <div class="page-layer d-flex flex-column min-vh-100 position-relative z-1">
+    <!-- Unified Top Navigation Bar -->
+    <header class="glass-nav py-2 px-3 px-lg-4 mb-4">
+      <div class="container-fluid d-flex align-items-center justify-content-between flex-wrap gap-3 py-1">
+        <a href="index.html" class="d-inline-flex align-items-center gap-3 text-decoration-none">
+          <span class="brand-mark">
+            <i class="bi bi-cloud-arrow-down-fill"></i>
+          </span>
+          <div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="fw-bold text-hi fs-5 font-display" style="letter-spacing: 0.05em;">Sandy</span>
+              <span class="flow-badge flow-badge-cyan font-mono">DOWNLOAD</span>
+            </div>
+            <div class="text-soft-80" style="font-size: 0.74rem;">Native Apps for Windows, Android &amp; Linux • Web Access for Apple</div>
+          </div>
+        </a>
+
+        <nav class="d-flex align-items-center flex-wrap gap-2" aria-label="Primary Navigation">
+          <a href="index.html" class="btn-glass-subtle small py-1 px-3">
+            <i class="bi bi-house-door text-neon-cyan"></i>
+            <span>Home</span>
+          </a>
+          <a href="Interface.html" class="btn-glass-subtle small py-1 px-3">
+            <i class="bi bi-camera-video text-neon-cyan"></i>
+            <span>Live Monitor</span>
+          </a>
+          <a href="download.html" class="btn-glass-secondary small py-1 px-3" style="border-color: rgba(0, 240, 255, 0.65);">
+            <i class="bi bi-download text-neon-cyan"></i>
+            <span>Download</span>
+          </a>
+          <a href="example.html" class="btn-glass-subtle small py-1 px-3">
+            <i class="bi bi-activity text-neon-pink"></i>
+            <span>Biofeedback Lab</span>
+          </a>
+        </nav>
+
+        <div id="sandyNavAuthSlot" class="d-flex align-items-center gap-2">
+          <div id="navSignedOutGroup" class="d-flex align-items-center gap-2">
+            <a href="signin.html?next=download.html" class="btn-glass-secondary small py-1 px-3">Sign In</a>
+            <a href="signup.html?next=download.html" class="btn-neon-primary small py-1 px-3">Sign Up</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container pb-5 flex-grow-1">
+      <!-- Auto-Detected OS Hero Banner -->
+      <div class="download-hero-card mb-4">
+        <div class="row align-items-center g-4">
+          <div class="col-lg-8">
+            <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+              <span class="flow-badge flow-badge-cyan font-mono" id="detectedOsBadge">
+                <i class="bi bi-cpu"></i>
+                <span>DETECTING YOUR DEVICE...</span>
+              </span>
+              <span class="flow-badge flow-badge-neutral font-mono">RELEASE v1.0.0</span>
+            </div>
+            <h1 class="display-6 fw-bold text-hi font-display mb-2" id="downloadHeroTitle">
+              Download Sandy for Your Device
+            </h1>
+            <p class="text-body-88 mb-0" style="max-width: 640px;" id="downloadHeroDesc">
+              Get the native Sandy app for Windows, Android, or Linux with full ESP32-S3 Bluetooth &amp; Wi-Fi support, YOLOv5 posture monitoring, Result Analyze, and Qwen3.6-35B AI Coach.
+            </p>
+          </div>
+          <div class="col-lg-4 text-lg-end">
+            <a id="primaryDownloadBtn" href="#platforms" class="btn-neon-primary py-3 px-4 text-decoration-none d-inline-flex align-items-center gap-2 fs-6">
+              <i id="primaryDownloadIcon" class="bi bi-download"></i>
+              <span id="primaryDownloadLabel">Choose Your Platform</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3 Platform Download Cards: Windows, Android, Linux -->
+      <div id="platforms" class="row g-4 mb-4">
+        <!-- 1. WINDOWS -->
+        <div class="col-lg-4">
+          <div class="os-download-card" id="card-windows">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="os-icon-badge" style="background: rgba(0, 240, 255, 0.14); border: 1px solid rgba(0, 240, 255, 0.45); color: #00F0FF;">
+                <i class="bi bi-windows"></i>
+              </div>
+              <span class="flow-badge flow-badge-cyan font-mono d-none" id="rec-windows">YOUR DEVICE</span>
+            </div>
+            <h3 class="fw-bold text-hi font-display mb-1">Windows</h3>
+            <div class="text-soft-80 font-mono small mb-2">Windows 10 / 11 (64-bit)</div>
+            <ul class="os-spec-list">
+              <li><i class="bi bi-check2-circle"></i> Native Windows installer (<code>.exe</code>)</li>
+              <li><i class="bi bi-check2-circle"></i> Always-on-top Mini HUD &amp; System Tray</li>
+              <li><i class="bi bi-check2-circle"></i> Direct USB, Bluetooth BLE &amp; Webcam</li>
+              <li><i class="bi bi-check2-circle"></i> Full Sandy Profile, Analyze &amp; AI Coach</li>
+            </ul>
+            <div class="mt-auto d-grid gap-2">
+              <a href="https://github.com/QUINTEX-productio/sandy.io/releases/latest" target="_blank" rel="noopener" class="btn-neon-primary py-2 text-center text-decoration-none">
+                <i class="bi bi-windows me-2"></i>Download for Windows (.exe)
+              </a>
+              <span class="text-center text-soft-80 font-mono" style="font-size: 0.70rem;">v1.0.0 &bull; x64 Setup Installer</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. ANDROID -->
+        <div class="col-lg-4">
+          <div class="os-download-card" id="card-android">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="os-icon-badge" style="background: rgba(0, 255, 102, 0.14); border: 1px solid rgba(0, 255, 102, 0.45); color: #00FF66;">
+                <i class="bi bi-android2"></i>
+              </div>
+              <span class="flow-badge flow-badge-good font-mono d-none" id="rec-android">YOUR DEVICE</span>
+            </div>
+            <h3 class="fw-bold text-hi font-display mb-1">Android</h3>
+            <div class="text-soft-80 font-mono small mb-2">Android 8.0+ (APK Package)</div>
+            <ul class="os-spec-list">
+              <li><i class="bi bi-check2-circle"></i> Direct native Android app (<code>.apk</code>)</li>
+              <li><i class="bi bi-check2-circle"></i> Picture-in-Picture (PiP) Mini Window</li>
+              <li><i class="bi bi-check2-circle"></i> Bluetooth BLE pairing &amp; Haptic alerts</li>
+              <li><i class="bi bi-check2-circle"></i> Synced Firebase Profile &amp; Result Analyze</li>
+            </ul>
+            <div class="mt-auto d-grid gap-2">
+              <a href="https://github.com/QUINTEX-productio/sandy.io/releases/latest" target="_blank" rel="noopener" class="btn-neon-primary py-2 text-center text-decoration-none">
+                <i class="bi bi-android2 me-2"></i>Download for Android (.apk)
+              </a>
+              <span class="text-center text-soft-80 font-mono" style="font-size: 0.70rem;">v1.0.0 &bull; ARM64 / Universal APK</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. LINUX -->
+        <div class="col-lg-4">
+          <div class="os-download-card" id="card-linux">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="os-icon-badge" style="background: rgba(255, 230, 0, 0.14); border: 1px solid rgba(255, 230, 0, 0.45); color: #FFE600;">
+                <i class="bi bi-ubuntu"></i>
+              </div>
+              <span class="flow-badge flow-badge-yellow font-mono d-none" id="rec-linux">YOUR DEVICE</span>
+            </div>
+            <h3 class="fw-bold text-hi font-display mb-1">Linux</h3>
+            <div class="text-soft-80 font-mono small mb-2">Ubuntu / Debian / Arch (x64)</div>
+            <ul class="os-spec-list">
+              <li><i class="bi bi-check2-circle"></i> Portable <code>.AppImage</code> &amp; <code>.deb</code> builds</li>
+              <li><i class="bi bi-check2-circle"></i> Lightweight floating desktop widget</li>
+              <li><i class="bi bi-check2-circle"></i> Full USB Serial &amp; Wi-Fi ESP32 support</li>
+              <li><i class="bi bi-check2-circle"></i> Identical Sandy Web UI &amp; AI Coach</li>
+            </ul>
+            <div class="mt-auto d-grid gap-2">
+              <a href="https://github.com/QUINTEX-productio/sandy.io/releases/latest" target="_blank" rel="noopener" class="btn-neon-primary py-2 text-center text-decoration-none">
+                <i class="bi bi-terminal me-2"></i>Download for Linux (.AppImage)
+              </a>
+              <span class="text-center text-soft-80 font-mono" style="font-size: 0.70rem;">v1.0.0 &bull; AppImage &amp; Debian (.deb)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Apple (macOS / iOS) Web Access Notice -->
+      <div class="glass-card p-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="os-icon-badge mb-0" style="width: 48px; height: 48px; font-size: 1.45rem; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.2); color: #F8FAFC;">
+            <i class="bi bi-apple"></i>
+          </div>
+          <div>
+            <div class="fw-bold text-hi">Using macOS or iOS (iPhone / iPad)?</div>
+            <div class="text-soft-80 small">
+              Apple devices run Sandy directly in Safari or Chrome on the web — no app installation required!
+            </div>
+          </div>
+        </div>
+        <div class="d-flex gap-2">
+          <a href="example.html" class="btn-glass-secondary small py-2 px-3 text-decoration-none">
+            <i class="bi bi-activity text-neon-pink me-1"></i>Try Web Demo
+          </a>
+          <a href="Interface.html" class="btn-neon-primary small py-2 px-3 text-decoration-none">
+            <i class="bi bi-globe me-1"></i>Open Web Interface
+          </a>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Firebase SDKs, Config, Motion Engine & Shared Sandy Nav -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="posture-motion.js"></script>
+  <script src="sandy-nav.js"></script>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.PostureMotion && typeof window.PostureMotion.initParticleRodBackground === 'function') {
+        window.PostureMotion.initParticleRodBackground();
+      }
+
+      const os = window.SandyNav ? window.SandyNav.detectOS() : 'windows';
+      const badge = document.getElementById('detectedOsBadge');
+      const title = document.getElementById('downloadHeroTitle');
+      const desc = document.getElementById('downloadHeroDesc');
+      const btn = document.getElementById('primaryDownloadBtn');
+      const icon = document.getElementById('primaryDownloadIcon');
+      const lbl = document.getElementById('primaryDownloadLabel');
+
+      if (os === 'macos' || os === 'ios') {
+        const label = os === 'macos' ? 'macOS' : 'iOS / iPadOS';
+        badge.innerHTML = `<i class="bi bi-apple"></i><span>DETECTED: APPLE ${label.toUpperCase()}</span>`;
+        title.textContent = `You're on ${label} — Use Sandy Right in Your Browser`;
+        desc.textContent = 'Apple devices have full access to the Sandy Web Interface directly on this site with zero installation needed.';
+        btn.href = 'Interface.html';
+        icon.className = 'bi bi-camera-video-fill';
+        lbl.textContent = 'Open Sandy Web Interface';
+      } else if (os === 'windows') {
+        badge.innerHTML = '<i class="bi bi-windows"></i><span>DETECTED: WINDOWS</span>';
+        title.textContent = 'Download Sandy for Windows';
+        btn.href = 'https://github.com/QUINTEX-productio/sandy.io/releases/latest';
+        btn.target = '_blank';
+        icon.className = 'bi bi-windows';
+        lbl.textContent = 'Download for Windows (.exe)';
+        document.getElementById('card-windows').classList.add('os-recommended');
+        document.getElementById('rec-windows').classList.remove('d-none');
+      } else if (os === 'android') {
+        badge.innerHTML = '<i class="bi bi-android2"></i><span>DETECTED: ANDROID</span>';
+        title.textContent = 'Download Sandy for Android';
+        btn.href = 'https://github.com/QUINTEX-productio/sandy.io/releases/latest';
+        btn.target = '_blank';
+        icon.className = 'bi bi-android2';
+        lbl.textContent = 'Download for Android (.apk)';
+        document.getElementById('card-android').classList.add('os-recommended');
+        document.getElementById('rec-android').classList.remove('d-none');
+      } else {
+        badge.innerHTML = '<i class="bi bi-ubuntu"></i><span>DETECTED: LINUX</span>';
+        title.textContent = 'Download Sandy for Linux';
+        btn.href = 'https://github.com/QUINTEX-productio/sandy.io/releases/latest';
+        btn.target = '_blank';
+        icon.className = 'bi bi-terminal';
+        lbl.textContent = 'Download for Linux (.AppImage)';
+        document.getElementById('card-linux').classList.add('os-recommended');
+        document.getElementById('rec-linux').classList.remove('d-none');
+      }
+    });
+  </script>
+</body>
+</html>
