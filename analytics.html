@@ -4,6 +4,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sandy</title>
+  <script>
+    (function () {
+      if (window.SandyDesktop || window.SandyNativeApp) return;
+      var hint = (navigator.userAgentData && navigator.userAgentData.platform || '').toLowerCase();
+      var ua = navigator.userAgent || '';
+      var plat = navigator.platform || '';
+      var isApple = false;
+      if (hint) {
+        isApple = (hint.indexOf('mac') !== -1 || hint.indexOf('ios') !== -1) && hint.indexOf('win') === -1 && hint.indexOf('android') === -1 && hint.indexOf('linux') === -1;
+      } else {
+        var isBlocked = /Windows|Win32|Win64|WOW64|Android|Linux|X11|CrOS/i.test(ua) || /Win|Linux/i.test(plat);
+        var looksApple = /iPad|iPhone|iPod|Macintosh|Mac OS X/i.test(ua) || /Mac/i.test(plat);
+        isApple = !isBlocked && looksApple;
+      }
+      if (!isApple) {
+        window.location.replace('download.html?from=analytics.html');
+      }
+    })();
+  </script>
 
   <!-- Google Fonts: Rajdhani, Inter & Share Tech Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">

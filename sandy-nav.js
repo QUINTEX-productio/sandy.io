@@ -446,8 +446,19 @@
     `;
 
     // Replace existing page-specific top header/navbar so every page shares ONE identical bar
+    // Preserve Interface.html legacy hidden telemetry IDs so Interface.html scripts never get null references
     const existingHeader = document.querySelector('header#stickyNav, header.nav, header.glass-nav, header.navbar, nav.navbar');
     if (existingHeader && existingHeader.parentNode) {
+      if (getCurrentPageKey().startsWith('interface')) {
+        const stub = document.createElement('div');
+        stub.style.display = 'none';
+        stub.setAttribute('aria-hidden', 'true');
+        ['btnToggle', 'colabDot', 'colabNavStatus', 'connectionBadge', 'espBadge', 'espDot', 'espNavStatus', 'espNodePill', 'firebaseDot', 'firebaseNavStatus'].forEach((id) => {
+          const orig = existingHeader.querySelector('#' + id);
+          if (orig) stub.appendChild(orig.cloneNode(true));
+        });
+        header.appendChild(stub);
+      }
       existingHeader.parentNode.replaceChild(header, existingHeader);
     } else {
       document.body.insertBefore(header, document.body.firstChild);
@@ -492,47 +503,8 @@
     const page = getCurrentPageKey();
     if (!PROTECTED_WEB_APP_PAGES.includes(page)) return false;
 
-    const os = detectOS();
-    const osLabel = os === 'windows' ? 'Windows' : os === 'android' ? 'Android' : 'Linux';
-    const osIcon = os === 'windows' ? 'bi-windows' : os === 'android' ? 'bi-android2' : 'bi-terminal';
-
-    const mainEl = document.querySelector('main');
-    if (mainEl) mainEl.style.display = 'none';
-
-    if (document.getElementById('sandyOsGateOverlay')) return true;
-    const gate = document.createElement('div');
-    gate.id = 'sandyOsGateOverlay';
-    gate.style.cssText = 'position:fixed; inset:0; z-index:10020; background:rgba(3,5,8,0.97); backdrop-filter:blur(18px); display:flex; align-items:center; justify-content:center; padding:1.25rem;';
-    gate.innerHTML = `
-      <div class="glass-card p-4 p-sm-5 text-center" style="max-width:500px; width:100%; border:1px solid rgba(0,240,255,0.55); box-shadow:0 24px 60px rgba(0,0,0,0.92);">
-        <div class="mb-3">
-          <span class="flow-badge flow-badge-cyan font-mono">
-            <i class="bi ${osIcon}"></i>
-            <span>${osLabel.toUpperCase()} BROWSER DETECTED</span>
-          </span>
-        </div>
-        <h3 class="fw-bold text-hi font-display mb-2">Download the Sandy App for ${osLabel}</h3>
-        <p class="text-body-88 small mb-4">
-          The Sandy Web Interface &amp; AI Chatbot are only available in-browser on <strong>Apple (iOS &amp; macOS)</strong> devices.
-          Because you are using <strong>${osLabel}</strong>, please download and install the native Sandy app instead.
-        </p>
-        <div class="d-grid gap-2">
-          <a href="download.html" class="btn-neon-primary py-2 text-decoration-none">
-            <i class="bi ${osIcon} me-1"></i>
-            <span>Download Sandy for ${osLabel}</span>
-          </a>
-          <a href="example.html" class="btn-glass-secondary py-2 text-decoration-none">
-            <i class="bi bi-activity text-neon-pink me-1"></i>
-            <span>Try Web Biofeedback Demo</span>
-          </a>
-          <a href="index.html" class="btn-glass-subtle py-2 text-decoration-none small">
-            <i class="bi bi-house-door me-1"></i>
-            <span>Back to Home</span>
-          </a>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(gate);
+    // Immediately redirect non-Apple browsers (Windows, Android, Linux) to download.html
+    window.location.replace('download.html?from=' + encodeURIComponent(page));
     return true;
   }
 

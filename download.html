@@ -197,6 +197,12 @@
 
     <main class="container pb-5 flex-grow-1">
 
+      <!-- Support redirect notice when Windows/Android/Linux user tries to open Web Interface -->
+      <div id="osRedirectNotice" class="glass-alert glass-alert-cyan d-none mb-3 small py-2 px-3" style="border:1px solid rgba(0,240,255,0.45); background:rgba(0,240,255,0.10); border-radius:14px;">
+        <i class="bi bi-info-circle-fill text-neon-cyan me-2"></i>
+        <span>The Sandy Web Interface &amp; AI Chatbot are reserved for <strong>Apple (iOS &amp; macOS)</strong> browsers. Download the native Sandy app for your device below!</span>
+      </div>
+
       <!-- ===================================================================
            VIEW 1: PLATFORM SELECTOR (HERO + 3 OS CARDS + APPLE WEB BANNER)
            =================================================================== -->
@@ -549,6 +555,10 @@
 
       // Support deep-linking straight into download progress: download.html?os=windows|android|linux
       const params = new URLSearchParams(window.location.search);
+      if (params.get('from')) {
+        const notice = document.getElementById('osRedirectNotice');
+        if (notice) notice.classList.remove('d-none');
+      }
       const autoOs = (params.get('os') || '').toLowerCase();
       if (SANDY_DOWNLOADS[autoOs]) {
         startSandyDownload(autoOs);
