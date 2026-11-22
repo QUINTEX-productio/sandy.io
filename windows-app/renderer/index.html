@@ -856,6 +856,21 @@
 
               <div class="setting-row">
                 <div>
+                  <div style="font-weight:600; font-size:0.88rem;">Language</div>
+                  <div style="font-size:0.76rem; color:var(--text-soft);">Choose app display language</div>
+                </div>
+                <select id="setLanguage" class="sandy-select" style="width:160px; height:36px;" onchange="saveAppSettings()">
+                  <option value="en">English (EN)</option>
+                  <option value="vi">Tiếng Việt (VI)</option>
+                  <option value="es">Español (ES)</option>
+                  <option value="fr">Français (FR)</option>
+                  <option value="ja">日本語 (JA)</option>
+                  <option value="ko">한국어 (KO)</option>
+                </select>
+              </div>
+
+              <div class="setting-row">
+                <div>
                   <div style="font-weight:600; font-size:0.88rem;">Layout Density</div>
                 </div>
                 <select id="setDensity" class="sandy-select" style="width:140px; height:36px;" onchange="saveAppSettings()">
@@ -1174,6 +1189,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="app-config.js"></script>
+  <script src="i18n.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

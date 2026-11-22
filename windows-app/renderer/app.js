@@ -54,6 +54,7 @@ let activeLightboxId = null;
 // Settings State
 let appSettings = {
   theme: 'cyan',
+  language: 'en',
   density: 'standard',
   particles: true,
   chime: true,
@@ -2102,6 +2103,8 @@ function applyTheme(themeName) {
 }
 
 function saveAppSettings() {
+  const langEl = document.getElementById('setLanguage');
+  if (langEl) appSettings.language = langEl.value || 'en';
   appSettings.particles = document.getElementById('setParticles').checked;
   appSettings.density = document.getElementById('setDensity').value;
   appSettings.chime = document.getElementById('setChime').checked;
@@ -2115,6 +2118,11 @@ function saveAppSettings() {
 
 function applyAllSettingsToDOM() {
   document.body.setAttribute('data-theme', appSettings.theme || 'cyan');
+  const langEl = document.getElementById('setLanguage');
+  if (langEl) langEl.value = appSettings.language || 'en';
+  if (window.SandyDesktopI18n) {
+    window.SandyDesktopI18n.apply(appSettings.language || 'en');
+  }
   document.body.classList.remove('density-compact', 'density-wide', 'no-particles');
   if (appSettings.density === 'compact') document.body.classList.add('density-compact');
   if (appSettings.density === 'wide') document.body.classList.add('density-wide');

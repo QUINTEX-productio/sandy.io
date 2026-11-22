@@ -1,0 +1,271 @@
+/**
+ * Sandy Windows App — Live Multi-Language Engine (EN, VI, ES, FR, JA, KO)
+ * Controlled from Settings -> Language
+ */
+(function () {
+  const DICT = {
+    vi: {
+      'Sign In': 'Đăng nhập',
+      'Create Account (Sign Up)': 'Tạo tài khoản (Đăng ký)',
+      'Back': 'Quay lại',
+      'Sign In to Sandy': 'Đăng nhập Sandy',
+      'Create Sandy Account': 'Tạo tài khoản Sandy',
+      'Sign In with Google / Gmail': 'Đăng nhập bằng Google / Gmail',
+      'Continue with Google / Gmail': 'Tiếp tục với Google / Gmail',
+      'Sign In & Sync with Sandy Website': 'Đăng nhập & Đồng bộ Firebase',
+      'Sign Up & Continue to Survey': 'Đăng ký & Tiếp tục khảo sát',
+      'Display Name': 'Tên hiển thị',
+      'Username': 'Tên người dùng',
+      'Email Address': 'Địa chỉ Email',
+      'Date of Birth': 'Ngày sinh',
+      'Gender': 'Giới tính',
+      'Password': 'Mật khẩu',
+      'Confirm Password': 'Xác nhận mật khẩu',
+      'means required': 'là bắt buộc',
+      'HOME MENU': 'TRANG CHỦ',
+      'Menu': 'Trang chủ',
+      'Devices': 'Thiết bị',
+      'Live Interface': 'Giám sát trực tiếp',
+      'AI Chatbot': 'Trợ lý AI',
+      'Reports & Media': 'Báo cáo & Media',
+      'Posture Report & Recordings': 'Báo cáo tư thế & Bản ghi',
+      'Settings': 'Cài đặt',
+      'Start Live Monitor': 'Bắt đầu giám sát',
+      'Replay Tutorial': 'Xem lại hướng dẫn',
+      'Add Device': 'Thêm thiết bị',
+      'How to Add Device': 'Cách thêm thiết bị',
+      'No device': 'Chưa có thiết bị',
+      'Preferences': 'Thông số thiết bị',
+      'Rename': 'Đổi tên',
+      'Delete': 'Xóa',
+      'Connect': 'Kết nối',
+      'Disconnect': 'Ngắt kết nối',
+      'Pairing': 'Đang ghép nối',
+      'Connected': 'Đã kết nối',
+      'Disconnected': 'Đã ngắt kết nối',
+      'Choose device': 'Chọn thiết bị',
+      'Camera Standby': 'Camera đang chờ',
+      'WAITING': 'ĐANG CHỜ',
+      'GOOD': 'TỐT',
+      'BAD': 'XẤU',
+      'New Chat': 'Đoạn chat mới',
+      'Wake Colab': 'Đánh thức Colab',
+      'Daily': 'Hàng ngày',
+      'Weekly': 'Hàng tuần',
+      'Monthly': 'Hàng tháng',
+      'Yearly': 'Hàng năm',
+      'Sync YOLO & Qwen': 'Đồng bộ YOLO & Qwen',
+      'Analyze': 'Phân tích',
+      'Recorded Images & Videos': 'Hình ảnh & Video đã ghi',
+      'All': 'Tất cả',
+      'Images': 'Hình ảnh',
+      'Videos': 'Video',
+      'About Sandy': 'Thông tin Sandy',
+      'App Version': 'Phiên bản ứng dụng',
+      'Color Theme & Layout': 'Chủ đề màu & Bố cục',
+      'Language': 'Ngôn ngữ',
+      'Choose app display language': 'Chọn ngôn ngữ hiển thị của ứng dụng',
+      'Detection, Recording & Colab': 'Nhận diện, Ghi hình & Colab',
+      'User Profile': 'Hồ sơ người dùng',
+      'Sign Out': 'Đăng xuất',
+      'Save Profile': 'Lưu hồ sơ',
+      'Cancel': 'Hủy',
+      'Close': 'Đóng',
+      'Skip': 'Bỏ qua',
+      'Next': 'Tiếp theo',
+      'Replay': 'Xem lại',
+      'Open Folder': 'Mở thư mục'
+    },
+    es: {
+      'Sign In': 'Iniciar sesión',
+      'Create Account (Sign Up)': 'Crear Cuenta (Registrarse)',
+      'Back': 'Atrás',
+      'Sign In to Sandy': 'Iniciar sesión en Sandy',
+      'Create Sandy Account': 'Crear Cuenta Sandy',
+      'Sign In with Google / Gmail': 'Iniciar sesión con Google / Gmail',
+      'Continue with Google / Gmail': 'Continuar con Google / Gmail',
+      'Display Name': 'Nombre visible',
+      'Username': 'Usuario',
+      'Email Address': 'Correo electrónico',
+      'Date of Birth': 'Fecha de nacimiento',
+      'Gender': 'Género',
+      'Password': 'Contraseña',
+      'Confirm Password': 'Confirmar contraseña',
+      'means required': 'es obligatorio',
+      'HOME MENU': 'MENÚ PRINCIPAL',
+      'Menu': 'Menú',
+      'Devices': 'Dispositivos',
+      'Live Interface': 'Interfaz en Vivo',
+      'AI Chatbot': 'Chatbot IA',
+      'Reports & Media': 'Informes y Medios',
+      'Posture Report & Recordings': 'Informe de Postura y Grabaciones',
+      'Settings': 'Configuración',
+      'Start Live Monitor': 'Iniciar Monitor',
+      'Replay Tutorial': 'Ver Tutorial',
+      'Add Device': 'Añadir Dispositivo',
+      'How to Add Device': 'Cómo Añadir Dispositivo',
+      'No device': 'Sin dispositivos',
+      'Preferences': 'Preferencias',
+      'Rename': 'Renombrar',
+      'Delete': 'Eliminar',
+      'Connect': 'Conectar',
+      'Disconnect': 'Desconectar',
+      'Pairing': 'Emparejando',
+      'Connected': 'Conectado',
+      'Disconnected': 'Desconectado',
+      'Choose device': 'Elegir dispositivo',
+      'Camera Standby': 'Cámara en espera',
+      'WAITING': 'ESPERANDO',
+      'GOOD': 'BUENA',
+      'BAD': 'MALA',
+      'New Chat': 'Nuevo Chat',
+      'Daily': 'Diario',
+      'Weekly': 'Semanal',
+      'Monthly': 'Mensual',
+      'Yearly': 'Anual',
+      'Analyze': 'Analizar',
+      'Recorded Images & Videos': 'Imágenes y Videos Grabados',
+      'All': 'Todo',
+      'Images': 'Imágenes',
+      'Videos': 'Videos',
+      'About Sandy': 'Acerca de Sandy',
+      'App Version': 'Versión de la App',
+      'Color Theme & Layout': 'Tema de Color y Diseño',
+      'Language': 'Idioma',
+      'Choose app display language': 'Elige el idioma de la aplicación',
+      'User Profile': 'Perfil de Usuario',
+      'Sign Out': 'Cerrar Sesión',
+      'Save Profile': 'Guardar Perfil',
+      'Cancel': 'Cancelar',
+      'Close': 'Cerrar',
+      'Skip': 'Omitir',
+      'Next': 'Siguiente',
+      'Replay': 'Repetir',
+      'Open Folder': 'Abrir Carpeta'
+    },
+    fr: {
+      'Sign In': 'Connexion',
+      'Create Account (Sign Up)': 'Créer un compte',
+      'Back': 'Retour',
+      'HOME MENU': 'MENU PRINCIPAL',
+      'Devices': 'Appareils',
+      'Live Interface': 'Interface Live',
+      'AI Chatbot': 'Chatbot IA',
+      'Reports & Media': 'Rapports & Médias',
+      'Posture Report & Recordings': 'Rapports & Enregistrements',
+      'Settings': 'Paramètres',
+      'Add Device': 'Ajouter un appareil',
+      'How to Add Device': 'Comment ajouter',
+      'No device': 'Aucun appareil',
+      'Preferences': 'Préférences',
+      'Rename': 'Renommer',
+      'Delete': 'Supprimer',
+      'Choose device': 'Choisir un appareil',
+      'Daily': 'Quotidien',
+      'Weekly': 'Hebdomadaire',
+      'Monthly': 'Mensuel',
+      'Yearly': 'Annuel',
+      'Analyze': 'Analyser',
+      'App Version': 'Version',
+      'Color Theme & Layout': 'Thème & Disposition',
+      'Language': 'Langue',
+      'Choose app display language': "Choisir la langue de l'application",
+      'User Profile': 'Profil utilisateur',
+      'Sign Out': 'Déconnexion'
+    },
+    ja: {
+      'Sign In': 'ログイン',
+      'Create Account (Sign Up)': '新規登録',
+      'Back': '戻る',
+      'HOME MENU': 'ホームメニュー',
+      'Devices': 'デバイス',
+      'Live Interface': 'ライブ画面',
+      'AI Chatbot': 'AIチャット',
+      'Reports & Media': 'レポートとメディア',
+      'Posture Report & Recordings': '姿勢レポートと録画',
+      'Settings': '設定',
+      'Add Device': 'デバイスを追加',
+      'How to Add Device': '追加方法',
+      'No device': 'デバイスなし',
+      'Preferences': '詳細設定',
+      'Rename': '名前を変更',
+      'Delete': '削除',
+      'Choose device': 'デバイスを選択',
+      'Daily': '日別',
+      'Weekly': '週別',
+      'Monthly': '月別',
+      'Yearly': '年別',
+      'Analyze': '分析',
+      'App Version': 'アプリバージョン',
+      'Color Theme & Layout': 'カラーテーマとレイアウト',
+      'Language': '言語',
+      'Choose app display language': 'アプリの表示言語を選択',
+      'User Profile': 'ユーザープロフィール',
+      'Sign Out': 'ログアウト'
+    },
+    ko: {
+      'Sign In': '로그인',
+      'Create Account (Sign Up)': '회원가입',
+      'Back': '뒤로',
+      'HOME MENU': '홈 메뉴',
+      'Devices': '기기',
+      'Live Interface': '실시간 화면',
+      'AI Chatbot': 'AI 챗봇',
+      'Reports & Media': '리포트 및 미디어',
+      'Posture Report & Recordings': '자세 리포트 및 녹화',
+      'Settings': '설정',
+      'Add Device': '기기 추가',
+      'How to Add Device': '추가 방법',
+      'No device': '기기 없음',
+      'Preferences': '기기 정보',
+      'Rename': '이름 변경',
+      'Delete': '삭제',
+      'Choose device': '기기 선택',
+      'Daily': '일간',
+      'Weekly': '주간',
+      'Monthly': '월간',
+      'Yearly': '연간',
+      'Analyze': '분석',
+      'App Version': '앱 버전',
+      'Color Theme & Layout': '색상 테마 및 레이아웃',
+      'Language': '언어',
+      'Choose app display language': '앱 표시 언어 선택',
+      'User Profile': '사용자 프로필',
+      'Sign Out': '로그아웃'
+    }
+  };
+
+  const LOOKUP = {};
+  Object.keys(DICT).forEach((lang) => {
+    LOOKUP[lang] = {};
+    Object.keys(DICT[lang]).forEach((k) => {
+      LOOKUP[lang][k.trim().toLowerCase()] = DICT[lang][k];
+    });
+  });
+
+  function applyDesktopLanguage(lang) {
+    const target = DICT[lang] ? lang : 'en';
+    document.documentElement.lang = target;
+    const map = LOOKUP[target] || {};
+
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) {
+      const parent = node.parentElement;
+      if (!parent) continue;
+      if (parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE' || parent.closest('#setLanguage')) continue;
+      if (typeof node.__sandyOrig !== 'string') node.__sandyOrig = node.nodeValue;
+      const orig = node.__sandyOrig;
+      const trimmed = orig.trim();
+      if (!trimmed) continue;
+      if (target === 'en') {
+        node.nodeValue = orig;
+      } else {
+        const hit = map[trimmed.toLowerCase()];
+        node.nodeValue = hit ? orig.replace(trimmed, hit) : orig;
+      }
+    }
+  }
+
+  window.SandyDesktopI18n = { apply: applyDesktopLanguage };
+})();

@@ -240,6 +240,78 @@
       transform: translateY(-1px);
     }
 
+    /* Top-Bar Language Switcher */
+    .sandy-lang-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+    .sandy-lang-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.40rem 0.72rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(0, 240, 255, 0.32);
+      color: #F8FAFC;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.16s ease;
+    }
+    .sandy-lang-btn:hover {
+      background: rgba(0, 240, 255, 0.14);
+      border-color: #00F0FF;
+    }
+    .sandy-lang-btn i {
+      color: #00F0FF;
+    }
+    .sandy-lang-menu {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      min-width: 165px;
+      background: rgba(10, 15, 30, 0.97);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border: 1px solid rgba(0, 240, 255, 0.36);
+      border-radius: 14px;
+      box-shadow: 0 18px 46px rgba(0, 0, 0, 0.82);
+      padding: 0.4rem;
+      z-index: 10060;
+      display: none;
+    }
+    .sandy-lang-menu.open {
+      display: block;
+      animation: sandyDropIn 0.16s ease-out;
+    }
+    .sandy-lang-opt {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 0.48rem 0.7rem;
+      border-radius: 9px;
+      background: transparent;
+      border: none;
+      color: #E2E8F0;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.15s ease;
+    }
+    .sandy-lang-opt:hover {
+      background: rgba(0, 240, 255, 0.12);
+      color: #FFFFFF;
+    }
+    .sandy-lang-opt.active {
+      background: rgba(0, 240, 255, 0.18);
+      color: #00F0FF;
+    }
+
     /* Profile Avatar Dropdown */
     .sandy-pfp-wrap {
       position: relative;
@@ -436,10 +508,29 @@
           </a>
         </nav>
 
-        <div id="sandyUnifiedAuthSlot" class="sandy-nav-auth">
-          <div id="sandyUnifiedSignedOut" class="sandy-nav-auth">
-            <a href="signin.html?next=${nextParam}" class="sandy-auth-btn-outline">Sign In</a>
-            <a href="signup.html?next=${nextParam}" class="sandy-auth-btn-solid">Sign Up</a>
+        <div style="display:inline-flex; align-items:center; gap:0.6rem;">
+          <!-- Top-Bar Language Selector (EN / VI / ES / FR / JA / KO) -->
+          <div class="sandy-lang-wrap" id="sandyLangWrap">
+            <button type="button" class="sandy-lang-btn" id="sandyLangBtn" aria-label="Select Language" title="Language">
+              <i class="bi bi-translate"></i>
+              <span id="sandyLangCurrentCode">EN</span>
+              <i class="bi bi-chevron-down" style="font-size:0.68rem;"></i>
+            </button>
+            <div class="sandy-lang-menu" id="sandyLangMenu" role="menu">
+              <button type="button" class="sandy-lang-opt" data-lang="en"><span>English</span><span class="font-mono">EN</span></button>
+              <button type="button" class="sandy-lang-opt" data-lang="vi"><span>Tiếng Việt</span><span class="font-mono">VI</span></button>
+              <button type="button" class="sandy-lang-opt" data-lang="es"><span>Español</span><span class="font-mono">ES</span></button>
+              <button type="button" class="sandy-lang-opt" data-lang="fr"><span>Français</span><span class="font-mono">FR</span></button>
+              <button type="button" class="sandy-lang-opt" data-lang="ja"><span>日本語</span><span class="font-mono">JA</span></button>
+              <button type="button" class="sandy-lang-opt" data-lang="ko"><span>한국어</span><span class="font-mono">KO</span></button>
+            </div>
+          </div>
+
+          <div id="sandyUnifiedAuthSlot" class="sandy-nav-auth">
+            <div id="sandyUnifiedSignedOut" class="sandy-nav-auth">
+              <a href="signin.html?next=${nextParam}" class="sandy-auth-btn-outline">Sign In</a>
+              <a href="signup.html?next=${nextParam}" class="sandy-auth-btn-solid">Sign Up</a>
+            </div>
           </div>
         </div>
       </div>
@@ -462,6 +553,44 @@
       existingHeader.parentNode.replaceChild(header, existingHeader);
     } else {
       document.body.insertBefore(header, document.body.firstChild);
+    }
+
+    // Wire Top-Bar Language Switcher & auto-load sandy-i18n.js
+    const langWrap = header.querySelector('#sandyLangWrap');
+    const langBtn = header.querySelector('#sandyLangBtn');
+    const langMenu = header.querySelector('#sandyLangMenu');
+    if (langBtn && langMenu) {
+      langBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        langMenu.classList.toggle('open');
+      });
+      document.addEventListener('click', (e) => {
+        if (langWrap && !langWrap.contains(e.target)) langMenu.classList.remove('open');
+      });
+      langMenu.querySelectorAll('.sandy-lang-opt').forEach((opt) => {
+        opt.addEventListener('click', () => {
+          const code = opt.dataset.lang || 'en';
+          localStorage.setItem('sandy_lang', code);
+          langMenu.classList.remove('open');
+          if (window.SandyI18n) {
+            window.SandyI18n.setLang(code);
+          } else {
+            const codeEl = document.getElementById('sandyLangCurrentCode');
+            if (codeEl) codeEl.textContent = code.toUpperCase();
+          }
+        });
+      });
+    }
+
+    if (!window.SandyI18n) {
+      const i18nScript = document.createElement('script');
+      i18nScript.src = 'sandy-i18n.js';
+      i18nScript.onload = () => {
+        if (window.SandyI18n) window.SandyI18n.apply();
+      };
+      document.head.appendChild(i18nScript);
+    } else {
+      window.SandyI18n.apply();
     }
   }
 
