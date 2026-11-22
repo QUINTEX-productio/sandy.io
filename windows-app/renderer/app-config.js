@@ -9,8 +9,8 @@ window.SANDY_CONFIG = {
   websiteBaseUrl: 'https://quintex-productio.github.io/sandy.io',
 
   // Colab Backends (Notebook 1: YOLOv5, Notebook 2: Qwen3.6-35B-A3B-UD-Q4_K_M.gguf)
-  colabApiUrl: 'https://plastic-smudgy-occupant.ngrok-free.dev',
-  qwenApiUrl: 'https://referenced-temperatures-wit-stay.trycloudflare.com',
+  colabApiUrl: 'https://chip-viking-southeast-bones.trycloudflare.com',
+  qwenApiUrl: 'https://meter-tones-stage-wanted.trycloudflare.com',
   esp32DefaultWifiUrl: 'http://192.168.4.1/capture',
   defaultConfidenceThreshold: 0.40,
   slouchAlertSeconds: 5,

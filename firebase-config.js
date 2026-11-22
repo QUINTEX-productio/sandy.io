@@ -8,8 +8,8 @@
 
 // 1. Google Colab Endpoints (2 Separate Notebooks: YOLOv5 + Qwen3.6-35B)
 window.BACKEND_CONFIG = {
-  colabApiUrl: "https://plastic-smudgy-occupant.ngrok-free.dev",   // Notebook 1: YOLOv5 Posture Detection
-  qwenApiUrl: "https://referenced-temperatures-wit-stay.trycloudflare.com", // Notebook 2: Qwen3.6-35B-A3B Report Coach & Chat
+  colabApiUrl: "https://chip-viking-southeast-bones.trycloudflare.com",   // Notebook 1: YOLOv5 Posture Detection
+  qwenApiUrl: "https://meter-tones-stage-wanted.trycloudflare.com", // Notebook 2: Qwen3.6-35B-A3B Report Coach & Chat
   esp32DefaultWifiUrl: "http://192.168.4.1/capture",
   defaultConfidenceThreshold: 0.40,
   slouchAlertSeconds: 5
