@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sandy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body data-theme="cyan">
+  <div class="ambient-bg"></div>
+  <canvas id="bgParticles"></canvas>
+
+  <!-- =========================================================================
+       CUSTOM WINDOWS TITLEBAR
+       ========================================================================= -->
+  <header class="titlebar">
+    <div class="titlebar-brand">
+      <span class="titlebar-logo-dot"><i class="bi bi-person-standing"></i></span>
+      <span>SANDY</span>
+      <span class="titlebar-ver" id="titlebarVersion">ver Alpha</span>
+    </div>
+    <div class="titlebar-controls">
+      <button class="win-btn" id="btnWinMin" title="Minimize"><i class="bi bi-dash-lg"></i></button>
+      <button class="win-btn" id="btnWinMax" title="Maximize"><i class="bi bi-square"></i></button>
+      <button class="win-btn close" id="btnWinClose" title="Close"><i class="bi bi-x-lg"></i></button>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       SCREEN 1: FIRST-LAUNCH SPLASH (LOGO ON TOP -> SANDY BELOW -> LOGIN / SIGN UP)
+       ========================================================================= -->
+  <section id="screenSplash" class="auth-screen">
+    <div class="glass-card splash-card">
+      <div class="sandy-logo-hero" aria-label="Sandy Logo">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="32" cy="14" r="7" stroke="#00F0FF" stroke-width="3" fill="rgba(0,240,255,0.18)"/>
+          <path d="M32 23V42" stroke="#00F0FF" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M20 30C24 27 40 27 44 30" stroke="#FF007F" stroke-width="3.2" stroke-linecap="round"/>
+          <path d="M23 53L32 42L41 53" stroke="#00FF66" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="32" cy="32" r="28" stroke="rgba(0,240,255,0.35)" stroke-width="1.5" stroke-dasharray="6 5"/>
+        </svg>
+      </div>
+      <h1 class="splash-app-name">SANDY</h1>
+      <p class="splash-tagline">
+        Real-time AI Posture Detection &amp; Spine Wellness Companion for Windows.
+      </p>
+
+      <div class="splash-actions">
+        <button type="button" class="btn-primary-neon" onclick="showAuthView('signin')">
+          <i class="bi bi-box-arrow-in-right"></i>
+          <span>Sign In</span>
+        </button>
+        <button type="button" class="btn-glass" onclick="showAuthView('signup')">
+          <i class="bi bi-person-plus"></i>
+          <span>Create Account (Sign Up)</span>
+        </button>
+      </div>
+
+      <div class="font-mono" style="margin-top: 22px; font-size: 0.72rem; color: var(--text-dim);">
+        Sandy Desktop • ver Alpha • Firebase &amp; Colab Powered
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       SCREEN 2: SIGN IN / SIGN UP (WEBSITE EMAIL FIREBASE BRIDGE + GOOGLE GMAIL)
+       ========================================================================= -->
+  <section id="screenAuth" class="auth-screen hidden">
+    <div class="glass-card auth-card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+        <button type="button" class="btn-glass" style="padding:6px 12px; font-size:0.8rem;" onclick="showSplashView()">
+          <i class="bi bi-arrow-left"></i> Back
+        </button>
+        <span class="font-mono" style="font-size:0.74rem; color:var(--accent);">SANDY ACCOUNT</span>
+      </div>
+
+      <div id="authAlert" class="alert-banner alert-error hidden" style="margin-bottom:14px;"></div>
+
+      <!-- SIGN IN PANEL -->
+      <div id="panelSignIn">
+        <h2 class="font-display" style="font-size:1.75rem; margin-bottom:4px;">Sign In to Sandy</h2>
+        <p style="font-size:0.84rem; color:var(--text-soft); margin-bottom:16px;">
+          Sign in with your email (synced through the Sandy website to Firebase) or continue directly with Google / Gmail.
+        </p>
+
+        <button type="button" class="btn-google" onclick="handleGoogleAuth('signin')">
+          <i class="bi bi-google" style="color:#EA4335;"></i>
+          <span>Sign In with Google / Gmail</span>
+        </button>
+
+        <div class="auth-divider">OR SIGN IN WITH EMAIL</div>
+
+        <form id="formSignIn" onsubmit="handleEmailSignIn(event)" style="display:flex; flex-direction:column; gap:13px;">
+          <div class="form-field">
+            <label for="inEmail">Email Address <span class="req-star">*</span></label>
+            <input id="inEmail" type="email" class="sandy-input" placeholder="you@example.com" required />
+          </div>
+          <div class="form-field">
+            <label for="inPassword">Password <span class="req-star">*</span></label>
+            <input id="inPassword" type="password" class="sandy-input" placeholder="Enter your password" required />
+          </div>
+          <div class="req-legend"><span class="req-star">*</span> means required</div>
+
+          <button type="submit" id="btnSignInSubmit" class="btn-primary-neon" style="width:100%; margin-top:4px;">
+            <i class="bi bi-shield-check"></i>
+            <span>Sign In &amp; Sync with Sandy Website</span>
+          </button>
+        </form>
+
+        <div style="text-align:center; margin-top:16px; font-size:0.83rem; color:var(--text-soft);">
+          Don't have an account?
+          <a href="#" onclick="showAuthView('signup'); return false;" style="color:var(--accent); font-weight:600; text-decoration:none;">Sign Up</a>
+        </div>
+      </div>
+
+      <!-- SIGN UP PANEL -->
+      <div id="panelSignUp" class="hidden">
+        <h2 class="font-display" style="font-size:1.75rem; margin-bottom:4px;">Create Sandy Account</h2>
+        <p style="font-size:0.84rem; color:var(--text-soft); margin-bottom:14px;">
+          Fill out your details to connect to Firebase via the Sandy website, or pre-fill using Google / Gmail.
+        </p>
+
+        <div id="googleSignUpWrap">
+          <button type="button" class="btn-google" onclick="handleGoogleAuth('signup')">
+            <i class="bi bi-google" style="color:#EA4335;"></i>
+            <span>Continue with Google / Gmail</span>
+          </button>
+          <div class="auth-divider">OR REGISTER WITH EMAIL</div>
+        </div>
+
+        <div id="googlePrefillNote" class="alert-banner alert-info hidden" style="margin-bottom:12px;">
+          <i class="bi bi-check-circle-fill"></i> Google account verified! Finish your Date of Birth, Gender &amp; Terms to continue.
+        </div>
+
+        <form id="formSignUp" onsubmit="handleEmailSignUp(event)" style="display:flex; flex-direction:column; gap:12px;">
+          <div class="form-grid-2">
+            <div class="form-field">
+              <label for="upDisplayName">Display Name <span class="req-star">*</span></label>
+              <input id="upDisplayName" type="text" class="sandy-input" placeholder="Alex Rivera" required />
+            </div>
+            <div class="form-field">
+              <label for="upUsername">Username <span class="req-star">*</span></label>
+              <input id="upUsername" type="text" class="sandy-input" placeholder="alex_posture" required />
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="upEmail">Email Address <span class="req-star">*</span></label>
+            <input id="upEmail" type="email" class="sandy-input" placeholder="you@example.com" required />
+          </div>
+
+          <div class="form-field">
+            <label>Date of Birth <span class="req-star">*</span></label>
+            <div class="dob-grid">
+              <select id="upDobMonth" class="sandy-select" required>
+                <option value="">Month</option>
+                <option value="01">January</option><option value="02">February</option>
+                <option value="03">March</option><option value="04">April</option>
+                <option value="05">May</option><option value="06">June</option>
+                <option value="07">July</option><option value="08">August</option>
+                <option value="09">September</option><option value="10">October</option>
+                <option value="11">November</option><option value="12">December</option>
+              </select>
+              <select id="upDobDay" class="sandy-select" required>
+                <option value="">Day</option>
+              </select>
+              <select id="upDobYear" class="sandy-select" required>
+                <option value="">Year</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="upGender">Gender <span class="req-star">*</span></label>
+            <select id="upGender" class="sandy-select" required>
+              <option value="">Select gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Non-binary">Non-binary</option>
+              <option value="Prefer not to say">Prefer not to say</option>
+            </select>
+          </div>
+
+          <div id="upPasswordWrap" style="display:flex; flex-direction:column; gap:10px;">
+            <div class="form-grid-2">
+              <div class="form-field">
+                <label for="upPassword">Password <span class="req-star">*</span></label>
+                <input id="upPassword" type="password" class="sandy-input" placeholder="Min. 6 chars" oninput="updatePasswordStrength(this.value)" required />
+              </div>
+              <div class="form-field">
+                <label for="upConfirmPassword">Confirm Password <span class="req-star">*</span></label>
+                <input id="upConfirmPassword" type="password" class="sandy-input" placeholder="Repeat password" required />
+              </div>
+            </div>
+            <div class="strength-bars">
+              <span id="pwBar1"></span><span id="pwBar2"></span><span id="pwBar3"></span><span id="pwBar4"></span>
+            </div>
+          </div>
+
+          <label style="display:flex; align-items:flex-start; gap:9px; font-size:0.80rem; color:var(--text-soft); cursor:pointer; margin-top:2px;">
+            <input id="upTos" type="checkbox" style="margin-top:3px;" required />
+            <span>I agree to the Sandy Terms of Service and Privacy Policy <span class="req-star">*</span></span>
+          </label>
+
+          <div class="req-legend"><span class="req-star">*</span> means required</div>
+
+          <button type="submit" id="btnSignUpSubmit" class="btn-primary-neon" style="width:100%;">
+            <i class="bi bi-arrow-right-circle"></i>
+            <span id="btnSignUpLabel">Sign Up &amp; Continue to Survey</span>
+          </button>
+        </form>
+
+        <div style="text-align:center; margin-top:14px; font-size:0.83rem; color:var(--text-soft);">
+          Already have an account?
+          <a href="#" onclick="showAuthView('signin'); return false;" style="color:var(--accent); font-weight:600; text-decoration:none;">Sign In</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       SCREEN 3: 3-STEP ONBOARDING SURVEY (MATCHING WEBSITE)
+       ========================================================================= -->
+  <section id="screenSurvey" class="auth-screen hidden">
+    <div class="glass-card auth-card" style="max-width:580px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+        <span class="font-mono" style="font-size:0.74rem; color:var(--accent);" id="surveyStepTag">STEP 1 OF 3 • OPTIONAL</span>
+        <span class="font-mono" style="font-size:0.72rem; color:var(--text-dim);">PERSONALIZATION SURVEY</span>
+      </div>
+
+      <h2 class="font-display" style="font-size:1.7rem; margin-bottom:4px;" id="surveyHeading">Medical Background</h2>
+      <p style="font-size:0.84rem; color:var(--text-soft); margin-bottom:18px;" id="surveySubtext">
+        Tell Sandy about any spine or back conditions so AI coaching and alerts stay safe for you.
+      </p>
+
+      <!-- Step 1: Medical Background (Optional) -->
+      <div id="surveyStep1" style="display:flex; flex-direction:column; gap:14px;">
+        <div class="survey-pills" id="medicalPillsWrap">
+          <button type="button" class="survey-pill" onclick="toggleMedPill(this, 'Scoliosis')">Scoliosis</button>
+          <button type="button" class="survey-pill" onclick="toggleMedPill(this, 'Lower Back Pain')">Lower Back Pain</button>
+          <button type="button" class="survey-pill" onclick="toggleMedPill(this, 'Neck / Cervical Strain')">Neck / Cervical Strain</button>
+          <button type="button" class="survey-pill" onclick="toggleMedPill(this, 'Herniated / Slipped Disc')">Herniated / Slipped Disc</button>
+          <button type="button" class="survey-pill" onclick="toggleMedPill(this, 'Rounded Shoulders / Kyphosis')">Rounded Shoulders</button>
+          <button type="button" class="survey-pill" onclick="toggleMedPill(this, 'None')">None</button>
+        </div>
+
+        <div class="form-field">
+          <label for="surveyMedNotes">Additional Medical Notes (Optional)</label>
+          <textarea id="surveyMedNotes" class="sandy-textarea" rows="3" placeholder="e.g., Recovering from shoulder surgery, physical therapist limits..."></textarea>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; margin-top:8px;">
+          <button type="button" class="btn-glass" onclick="goSurveyStep(2)">Skip</button>
+          <button type="button" class="btn-primary-neon" onclick="goSurveyStep(2)">Next <i class="bi bi-arrow-right"></i></button>
+        </div>
+      </div>
+
+      <!-- Step 2: Daily Routine & Desk Environment (Optional) -->
+      <div id="surveyStep2" class="hidden" style="display:flex; flex-direction:column; gap:14px;">
+        <div class="form-field">
+          <label for="surveySeatHours">How many hours do you sit per day?</label>
+          <select id="surveySeatHours" class="sandy-select">
+            <option value="Under 4 hours">Under 4 hours</option>
+            <option value="4–6 hours">4–6 hours</option>
+            <option value="6–8 hours" selected>6–8 hours</option>
+            <option value="8+ hours">8+ hours (Heavy Desk Work)</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="surveyDeskSetup">Primary Workstation Setup</label>
+          <select id="surveyDeskSetup" class="sandy-select">
+            <option value="Laptop Only">Laptop Only</option>
+            <option value="Desktop / External Monitor" selected>Desktop / External Monitor</option>
+            <option value="Dual Monitors">Dual Monitors</option>
+            <option value="Standing / Adjustable Desk">Standing / Adjustable Desk</option>
+          </select>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; margin-top:8px;">
+          <button type="button" class="btn-glass" onclick="goSurveyStep(1)"><i class="bi bi-arrow-left"></i> Back</button>
+          <div style="display:flex; gap:10px;">
+            <button type="button" class="btn-glass" onclick="goSurveyStep(3)">Skip</button>
+            <button type="button" class="btn-primary-neon" onclick="goSurveyStep(3)">Next <i class="bi bi-arrow-right"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Primary Goal (REQUIRED — No Skip) -->
+      <div id="surveyStep3" class="hidden" style="display:flex; flex-direction:column; gap:10px;">
+        <div id="surveyGoalErr" class="alert-banner alert-error hidden">
+          Please choose your primary posture goal to continue.
+        </div>
+
+        <div class="goal-card" onclick="selectSurveyGoal(this, 'Relieve Neck & Back Pain', 'Gentle Relief Path')">
+          <i class="bi bi-heart-pulse-fill" style="color:var(--neon-red);"></i>
+          <div>
+            <div style="font-weight:700; font-size:0.92rem;">Relieve Neck &amp; Back Pain</div>
+            <div style="font-size:0.76rem; color:var(--text-soft);">Early slouch alerts and gentle recovery prompts</div>
+          </div>
+        </div>
+
+        <div class="goal-card" onclick="selectSurveyGoal(this, 'Build Upright Sitting Habit', 'Daily Habit Path')">
+          <i class="bi bi-award-fill" style="color:var(--accent);"></i>
+          <div>
+            <div style="font-weight:700; font-size:0.92rem;">Build Upright Sitting Habit</div>
+            <div style="font-size:0.76rem; color:var(--text-soft);">Balanced posture scoring and consistent daily coaching</div>
+          </div>
+        </div>
+
+        <div class="goal-card" onclick="selectSurveyGoal(this, 'Improve Focus & Ergonomics', 'Deep Work Path')">
+          <i class="bi bi-lightning-charge-fill" style="color:var(--neon-amber);"></i>
+          <div>
+            <div style="font-weight:700; font-size:0.92rem;">Improve Focus &amp; Ergonomics</div>
+            <div style="font-size:0.76rem; color:var(--text-soft);">Clean live reading with quiet visual cues while working</div>
+          </div>
+        </div>
+
+        <div class="goal-card" onclick="selectSurveyGoal(this, 'Gentle Posture Recovery', 'Rehab Recovery Path')">
+          <i class="bi bi-shield-plus" style="color:var(--neon-green);"></i>
+          <div>
+            <div style="font-weight:700; font-size:0.92rem;">Gentle Posture Recovery</div>
+            <div style="font-size:0.76rem; color:var(--text-soft);">Tailored for medical exceptions and gradual improvement</div>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; margin-top:12px;">
+          <button type="button" class="btn-glass" onclick="goSurveyStep(2)"><i class="bi bi-arrow-left"></i> Back</button>
+          <button type="button" id="btnFinishSurvey" class="btn-primary-neon" onclick="submitOnboardingSurvey()">
+            <i class="bi bi-check2-circle"></i> Submit &amp; Launch Sandy
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       MAIN WORKSPACE SHELL
+       ========================================================================= -->
+  <div id="workspaceShell" class="workspace-shell hidden">
+
+    <!-- LEFT SIDEBAR RAIL WITH ANIMATED SCROLL-TO-CIRCLE INDICATOR -->
+    <aside class="sidebar-rail" id="sidebarRail">
+      <div class="rail-logo-mini" onclick="navigateToSection('menu')" title="Sandy Home Menu">
+        <i class="bi bi-person-standing" style="font-size:1.35rem; color:var(--accent);"></i>
+      </div>
+
+      <nav class="rail-nav" id="railNav">
+        <div class="rail-circle-indicator" id="railCircle"></div>
+
+        <button class="rail-btn active" data-section="menu" data-label="Menu" onclick="navigateToSection('menu')">
+          <i class="bi bi-grid-1x2-fill"></i>
+        </button>
+        <button class="rail-btn" data-section="devices" data-label="Devices" onclick="navigateToSection('devices')">
+          <i class="bi bi-bluetooth"></i>
+        </button>
+        <button class="rail-btn" data-section="interface" data-label="Interface" onclick="navigateToSection('interface')">
+          <i class="bi bi-camera-video-fill"></i>
+        </button>
+        <button class="rail-btn" data-section="chatbot" data-label="AI Chatbot" onclick="navigateToSection('chatbot')">
+          <i class="bi bi-chat-dots-fill"></i>
+        </button>
+        <button class="rail-btn" data-section="report" data-label="Report" onclick="navigateToSection('report')">
+          <i class="bi bi-bar-chart-line-fill"></i>
+        </button>
+        <button class="rail-btn" data-section="settings" data-label="Settings" onclick="navigateToSection('settings')">
+          <i class="bi bi-gear-fill"></i>
+        </button>
+      </nav>
+
+      <div class="rail-footer">ALPHA</div>
+    </aside>
+
+    <!-- TOP-RIGHT FLOATING USER PROFILE BAR (EXACT WEBSITE STYLE: ONLY USER PROFILE & SIGN OUT) -->
+    <div class="topbar-user-area">
+      <div class="sandy-pfp-wrap">
+        <button type="button" class="sandy-pfp-btn" id="pfpToggleBtn" onclick="toggleProfileDropdown()" title="Account Menu">
+          <span id="pfpAvatarContent">S</span>
+        </button>
+        <div class="sandy-pfp-menu" id="pfpDropdownMenu">
+          <div class="sandy-pfp-header">
+            <div class="sandy-pfp-name" id="pfpMenuName">Sandy User</div>
+            <div class="sandy-pfp-handle" id="pfpMenuHandle">@sandy_user</div>
+          </div>
+          <button type="button" class="sandy-pfp-item" onclick="openProfileModal()">
+            <i class="bi bi-person-circle"></i>
+            <span>User Profile</span>
+          </button>
+          <div class="sandy-pfp-divider"></div>
+          <button type="button" class="sandy-pfp-item sandy-pfp-signout" onclick="handleSignOut()">
+            <i class="bi bi-box-arrow-right"></i>
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SMOOTH VERTICAL SCROLL VIEWPORT (SCROLLS TO SELECTED CIRCLE SECTION) -->
+    <main class="main-scroll-viewport" id="mainViewport">
+
+      <!-- =====================================================================
+           SECTION 1: MENU (FIRST-LAUNCH HOME HUB)
+           ===================================================================== -->
+      <section class="app-section" id="sec-menu" data-section="menu">
+        <div class="section-inner">
+          <div class="section-header">
+            <div>
+              <div class="section-kicker">HOME MENU</div>
+              <h1 class="section-title" id="menuGreeting">Welcome to Sandy</h1>
+              <div class="section-subtitle">Choose a module below or select any icon on the left bar to scroll right to it.</div>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <span class="status-pill cyan" id="pillYoloStatus"><i class="bi bi-cpu"></i> YOLOv5: Standby</span>
+              <span class="status-pill cyan" id="pillQwenStatus"><i class="bi bi-stars"></i> Qwen3.6: Standby</span>
+            </div>
+          </div>
+
+          <div class="glass-card menu-hero">
+            <div style="display:flex; align-items:center; gap:18px;">
+              <div class="sandy-logo-hero" style="width:68px; height:68px; margin:0; border-radius:18px;">
+                <svg viewBox="0 0 64 64" fill="none" style="width:40px; height:40px;">
+                  <circle cx="32" cy="14" r="7" stroke="#00F0FF" stroke-width="3" fill="rgba(0,240,255,0.18)"/>
+                  <path d="M32 23V42" stroke="#00F0FF" stroke-width="3.5" stroke-linecap="round"/>
+                  <path d="M20 30C24 27 40 27 44 30" stroke="#FF007F" stroke-width="3.2" stroke-linecap="round"/>
+                  <path d="M23 53L32 42L41 53" stroke="#00FF66" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div>
+                <div class="font-mono" style="font-size:0.74rem; color:var(--accent);">ACTIVE POSTURE PLAN</div>
+                <div class="font-display" style="font-size:1.55rem; font-weight:700;" id="menuPlanName">Build Upright Sitting Habit</div>
+                <div style="font-size:0.84rem; color:var(--text-soft);" id="menuActiveDeviceText">Connected Bluetooth Device: None</div>
+              </div>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <button type="button" class="btn-primary-neon" onclick="navigateToSection('interface')">
+                <i class="bi bi-play-circle-fill"></i> Start Live Monitor
+              </button>
+              <button type="button" class="btn-glass" onclick="openTutorialModal(0)">
+                <i class="bi bi-mortarboard"></i> Replay Tutorial
+              </button>
+            </div>
+          </div>
+
+          <div class="menu-cards-grid">
+            <div class="glass-card menu-tile" onclick="navigateToSection('devices')">
+              <div class="menu-tile-icon"><i class="bi bi-bluetooth"></i></div>
+              <div class="font-display" style="font-size:1.25rem; font-weight:700;">Devices</div>
+              <div style="font-size:0.83rem; color:var(--text-soft);">Pair Bluetooth ESP32 posture sensors, view device specs, rename, or manage connection history.</div>
+            </div>
+
+            <div class="glass-card menu-tile" onclick="navigateToSection('interface')">
+              <div class="menu-tile-icon"><i class="bi bi-camera-video-fill"></i></div>
+              <div class="font-display" style="font-size:1.25rem; font-weight:700;">Live Interface</div>
+              <div style="font-size:0.83rem; color:var(--text-soft);">Minimal distraction-free camera feed &amp; live GOOD/BAD posture reading powered by Colab YOLOv5.</div>
+            </div>
+
+            <div class="glass-card menu-tile" onclick="navigateToSection('chatbot')">
+              <div class="menu-tile-icon"><i class="bi bi-chat-dots-fill"></i></div>
+              <div class="font-display" style="font-size:1.25rem; font-weight:700;">AI Chatbot</div>
+              <div style="font-size:0.83rem; color:var(--text-soft);">Dedicated posture &amp; spine wellness coach on Qwen3.6-35B with strict on-topic protection.</div>
+            </div>
+
+            <div class="glass-card menu-tile" onclick="navigateToSection('report')">
+              <div class="menu-tile-icon"><i class="bi bi-bar-chart-line-fill"></i></div>
+              <div class="font-display" style="font-size:1.25rem; font-weight:700;">Reports &amp; Media</div>
+              <div style="font-size:0.83rem; color:var(--text-soft);">Daily, Weekly, Monthly &amp; Yearly YOLO→Qwen reports, Day-1 comparison, and recorded images &amp; videos.</div>
+            </div>
+
+            <div class="glass-card menu-tile" onclick="navigateToSection('settings')">
+              <div class="menu-tile-icon"><i class="bi bi-gear-fill"></i></div>
+              <div class="font-display" style="font-size:1.25rem; font-weight:700;">Settings</div>
+              <div style="font-size:0.83rem; color:var(--text-soft);">App version (ver Alpha), Cyberpunk color themes, slouch chime, auto-recording &amp; Colab preferences.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           SECTION 2: DEVICES (RED ADD DEVICE + HOW TO ADD + SIDEWAYS BEVELED LIST)
+           ===================================================================== -->
+      <section class="app-section" id="sec-devices" data-section="devices">
+        <div class="section-inner">
+          <div class="section-header">
+            <div>
+              <div class="section-kicker">HARDWARE &amp; BLUETOOTH</div>
+              <h1 class="section-title">Devices</h1>
+              <div class="section-subtitle">Current and previously connected posture detection devices.</div>
+            </div>
+          </div>
+
+          <div class="devices-toolbar">
+            <button type="button" class="btn-red-neon" onclick="openAddDeviceModal()">
+              <i class="bi bi-plus-circle-fill"></i>
+              <span>Add Device</span>
+            </button>
+            <button type="button" class="btn-glass" onclick="openHowToAddModal()">
+              <i class="bi bi-question-circle"></i>
+              <span>How to Add Device</span>
+            </button>
+          </div>
+
+          <div id="devicesListContainer" class="devices-list">
+            <!-- Populated dynamically by app.js; displays "No device" when empty -->
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           SECTION 3: LIVE INTERFACE (CLEAN FRONT: CAMERA + GOOD/BAD + CIRCLE + CHOOSE DEVICE)
+           ===================================================================== -->
+      <section class="app-section" id="sec-interface" data-section="interface">
+        <div class="section-inner">
+          <div class="interface-minimal-stage">
+
+            <!-- 1. Camera Feed -->
+            <div class="camera-frame-box" id="cameraFrameBox">
+              <video id="liveCameraVideo" autoplay playsinline muted></video>
+              <img id="liveEspImg" alt="Live Posture Camera" />
+              <canvas id="liveCameraOverlay"></canvas>
+              <div class="camera-placeholder" id="cameraPlaceholder">
+                <i class="bi bi-camera-video"></i>
+                <div class="font-display" style="font-size:1.2rem; font-weight:700; color:var(--text-hi);">Camera Standby</div>
+                <div style="font-size:0.84rem; margin-top:4px;">Select a connected Bluetooth device below and press the center circle to begin.</div>
+              </div>
+            </div>
+
+            <!-- 2. Live Posture Reading (GOOD / BAD) -->
+            <div class="live-reading-bar" id="liveReadingBar">
+              <span class="live-reading-dot"></span>
+              <span class="live-reading-text" id="liveReadingText">WAITING</span>
+            </div>
+
+            <!-- 3. Centered Circular Interface Icon Below + 4. Choose Device Dropdown -->
+            <div class="interface-center-controls">
+              <button type="button" class="interface-circle-btn" id="btnInterfaceCircle" onclick="toggleLiveMonitor()" title="Start / Stop Live Posture Detection">
+                <i class="bi bi-person-standing" id="interfaceCircleIcon"></i>
+              </button>
+
+              <label class="choose-device-label" for="interfaceDeviceSelect">Choose device</label>
+              <select id="interfaceDeviceSelect" class="sandy-select" onchange="handleInterfaceDeviceChange(this.value)">
+                <option value="">No Bluetooth device connected</option>
+              </select>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           SECTION 4: AI CHATBOT (QWEN3.6-35B + EXACT STRICT OFF-TOPIC GUARDRAIL)
+           ===================================================================== -->
+      <section class="app-section" id="sec-chatbot" data-section="chatbot">
+        <div class="section-inner">
+          <div class="section-header">
+            <div>
+              <div class="section-kicker">QWEN3.6-35B-A3B POSTURE COACH</div>
+              <h1 class="section-title">AI Chatbot</h1>
+              <div class="section-subtitle">Auto-wakes Colab Qwen GPU and stays strictly focused on posture, ergonomics &amp; spine health.</div>
+            </div>
+            <button type="button" class="btn-glass" onclick="resetChatConversation()">
+              <i class="bi bi-arrow-counterclockwise"></i> New Chat
+            </button>
+          </div>
+
+          <div class="chat-layout">
+            <!-- Left Context Column -->
+            <div class="glass-card chat-sidebar-card">
+              <div class="font-mono" style="font-size:0.72rem; color:var(--accent);">SYNCED CONTEXT</div>
+
+              <div class="glass-sub" style="padding:12px;">
+                <div class="device-field-label">TODAY'S BACK SCORE</div>
+                <div class="font-mono" style="font-size:1.35rem; font-weight:700; color:var(--neon-green); margin-top:2px;" id="chatCtxScore">-- / 100</div>
+              </div>
+
+              <div class="glass-sub" style="padding:12px;">
+                <div class="device-field-label">POSTURE GOAL</div>
+                <div style="font-size:0.84rem; font-weight:600; margin-top:3px;" id="chatCtxGoal">Build Upright Sitting Habit</div>
+              </div>
+
+              <div class="glass-sub" style="padding:12px;">
+                <div class="device-field-label">MEDICAL NOTES</div>
+                <div style="font-size:0.80rem; color:var(--text-soft); margin-top:3px;" id="chatCtxMedical">None reported</div>
+              </div>
+
+              <div class="font-mono" style="font-size:0.70rem; color:var(--text-dim); margin-top:4px;">QUICK PROMPTS</div>
+              <button type="button" class="chip-btn" onclick="sendQuickChat('Give me a 2-minute desk stretch for stiff neck and upper back.')">2-min desk stretch for neck</button>
+              <button type="button" class="chip-btn" onclick="sendQuickChat('How should I set up my monitor and chair height for upright posture?')">Ergonomic chair &amp; monitor setup</button>
+              <button type="button" class="chip-btn" onclick="sendQuickChat('Why do I keep slouching after 30 minutes of working?')">Why do I slouch after 30 mins?</button>
+              <button type="button" class="chip-btn" onclick="sendQuickChat('How can I improve my Sandy back score above 85?')">How to reach 85+ back score?</button>
+            </div>
+
+            <!-- Main Chat Panel -->
+            <div class="glass-card chat-main-card">
+              <div class="chat-header-bar">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <span class="status-pill cyan"><i class="bi bi-shield-lock"></i> Posture-Only Guardrail</span>
+                  <span class="font-mono" style="font-size:0.74rem; color:var(--text-soft);" id="chatEngineLabel">Waking Colab Qwen3.6-35B...</span>
+                </div>
+                <button type="button" class="btn-glass" style="padding:6px 11px; font-size:0.76rem;" onclick="wakeColabServices('qwen')">
+                  <i class="bi bi-lightning-charge"></i> Wake Colab
+                </button>
+              </div>
+
+              <div class="chat-messages" id="chatMessagesList"></div>
+
+              <form class="chat-composer" onsubmit="handleChatSubmit(event)">
+                <input id="chatPromptInput" type="text" class="sandy-input" placeholder="Ask Sandy AI about posture, ergonomics, or spine health..." autocomplete="off" />
+                <button type="submit" id="btnChatSend" class="btn-primary-neon" style="padding:0 22px;">
+                  <i class="bi bi-send-fill"></i>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           SECTION 5: REPORT (DAILY/WEEKLY/MONTHLY/YEARLY BOXES + FIRST-DAY COMPARISON + YOLO->QWEN + RECORDED IMAGES & VIDEOS)
+           ===================================================================== -->
+      <section class="app-section" id="sec-report" data-section="report">
+        <div class="section-inner">
+          <div class="section-header">
+            <div>
+              <div class="section-kicker">YOLOV5 → QWEN3.6-35B → REPORT</div>
+              <h1 class="section-title">Posture Report &amp; Recordings</h1>
+              <div class="section-subtitle">Select Daily, Weekly, Monthly, or Yearly to review your scores, Day-1 progress, Qwen analysis, and recorded images/videos.</div>
+            </div>
+            <div style="display:flex; gap:10px;">
+              <button type="button" class="btn-glass" onclick="refreshReportData(true)">
+                <i class="bi bi-arrow-clockwise"></i> Sync YOLO &amp; Qwen
+              </button>
+            </div>
+          </div>
+
+          <!-- 4 Clickable Timeframe Selection Boxes -->
+          <div class="timeframe-boxes" id="reportTimeframeBoxes">
+            <button type="button" class="tf-box active" data-tf="daily" onclick="selectReportTimeframe('daily')">
+              <div class="tf-box-title">Daily</div>
+              <div class="tf-box-sub">Today's sessions &amp; media</div>
+            </button>
+            <button type="button" class="tf-box" data-tf="weekly" onclick="selectReportTimeframe('weekly')">
+              <div class="tf-box-title">Weekly</div>
+              <div class="tf-box-sub">Last 7 days overview</div>
+            </button>
+            <button type="button" class="tf-box" data-tf="monthly" onclick="selectReportTimeframe('monthly')">
+              <div class="tf-box-title">Monthly</div>
+              <div class="tf-box-sub">Last 30 days progress</div>
+            </button>
+            <button type="button" class="tf-box" data-tf="yearly" onclick="selectReportTimeframe('yearly')">
+              <div class="tf-box-title">Yearly</div>
+              <div class="tf-box-sub">12-month spine trend</div>
+            </button>
+          </div>
+
+          <div class="report-grid">
+            <!-- Left: Score Ring + Trend Chart -->
+            <div class="glass-card" style="padding:22px; display:flex; flex-direction:column; gap:18px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                <div>
+                  <div class="font-display" style="font-size:1.3rem; font-weight:700;" id="repHeading">Daily Back Score</div>
+                  <div style="font-size:0.78rem; color:var(--text-soft);" id="repSubheading">Aggregated from YOLOv5 live posture telemetry</div>
+                </div>
+                <span class="status-pill cyan" id="repDataCoveragePill">1 / 1 Day Logged</span>
+              </div>
+
+              <div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
+                <div class="score-ring-wrap">
+                  <svg width="154" height="154" viewBox="0 0 154 154">
+                    <circle cx="77" cy="77" r="64" fill="none" stroke="rgba(255,255,255,0.09)" stroke-width="12"></circle>
+                    <circle id="repMainArc" cx="77" cy="77" r="64" fill="none" stroke="#00FF66" stroke-width="12" stroke-linecap="round" stroke-dasharray="402.12" stroke-dashoffset="402.12"></circle>
+                  </svg>
+                  <div class="score-ring-center">
+                    <div class="font-mono" style="font-size:0.68rem; color:var(--text-soft);" id="repRingLabel">AVG SCORE</div>
+                    <div class="font-mono" style="font-size:2.1rem; font-weight:700;" id="repRingScore">--</div>
+                    <span class="font-mono" style="font-size:0.70rem;" id="repRingRating">NO DATA</span>
+                  </div>
+                </div>
+
+                <div style="flex:1; min-width:210px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                  <div class="glass-sub" style="padding:11px;">
+                    <div class="device-field-label">GOOD POSTURE</div>
+                    <div class="font-mono" style="font-size:1.2rem; font-weight:700; color:var(--neon-green);" id="repGoodFrames">0</div>
+                  </div>
+                  <div class="glass-sub" style="padding:11px;">
+                    <div class="device-field-label">BAD / SLOUCH</div>
+                    <div class="font-mono" style="font-size:1.2rem; font-weight:700; color:var(--neon-red);" id="repBadFrames">0</div>
+                  </div>
+                  <div class="glass-sub" style="padding:11px;">
+                    <div class="device-field-label">SLOUCH ALERTS</div>
+                    <div class="font-mono" style="font-size:1.2rem; font-weight:700; color:var(--neon-amber);" id="repSlouchAlerts">0</div>
+                  </div>
+                  <div class="glass-sub" style="padding:11px;">
+                    <div class="device-field-label">RECORDED MEDIA</div>
+                    <div class="font-mono" style="font-size:1.2rem; font-weight:700; color:var(--accent);" id="repMediaCount">0</div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div class="font-mono" style="font-size:0.70rem; color:var(--text-dim); margin-bottom:4px;" id="repTrendLabel">PERIOD BREAKDOWN (DASHED = NO DATA RECORDED THAT DAY)</div>
+                <div class="trend-bars" id="repTrendBars"></div>
+              </div>
+            </div>
+
+            <!-- Right: First-Day Comparison & Lack-of-Data Box + YOLO -> Qwen -> Report Box -->
+            <div style="display:flex; flex-direction:column; gap:16px;">
+              <!-- Box A: First-Day Comparison & Lack-of-Data Handler -->
+              <div class="glass-card" style="padding:20px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                  <div class="font-display" style="font-size:1.15rem; font-weight:700;">
+                    <i class="bi bi-calendar2-range" style="color:var(--accent); margin-right:6px;"></i>
+                    First-Day Baseline &amp; Data Status
+                  </div>
+                  <span class="status-pill good" id="repFirstDayDeltaBadge">--</span>
+                </div>
+
+                <div id="repLackDataNotice" class="alert-banner alert-info hidden" style="margin-bottom:12px;"></div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+                  <div class="glass-sub" style="padding:11px;">
+                    <div class="device-field-label">DAY 1 (FIRST RECORDED)</div>
+                    <div class="font-mono" style="font-size:1.2rem; font-weight:700;" id="repFirstDayScore">--</div>
+                    <div style="font-size:0.72rem; color:var(--text-soft);" id="repFirstDayDate">No session yet</div>
+                  </div>
+                  <div class="glass-sub" style="padding:11px;">
+                    <div class="device-field-label">CURRENT PERIOD AVG</div>
+                    <div class="font-mono" style="font-size:1.2rem; font-weight:700;" id="repCurrentCompareScore">--</div>
+                    <div style="font-size:0.72rem; color:var(--text-soft);" id="repTrendSummary">Start monitoring to track change</div>
+                  </div>
+                </div>
+                <div style="font-size:0.80rem; color:var(--text-soft);" id="repFirstDayExplain">
+                  Once posture frames are captured by YOLOv5, Sandy compares your current posture directly against Day 1 even if some days in a week, month, or year lack data.
+                </div>
+              </div>
+
+              <!-- Box B: YOLO -> Qwen3.6 -> Report Summary -->
+              <div class="glass-card" style="padding:20px; flex:1; display:flex; flex-direction:column; gap:10px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                  <div>
+                    <div class="font-display" style="font-size:1.15rem; font-weight:700;">
+                      <i class="bi bi-stars" style="color:var(--accent); margin-right:6px;"></i>
+                      Qwen3.6 Posture Analysis
+                    </div>
+                    <div class="font-mono" style="font-size:0.68rem; color:var(--accent);">PIPELINE: YOLOv5 → QWEN3.6-35B → REPORT</div>
+                  </div>
+                  <button type="button" class="btn-primary-neon" style="padding:7px 13px; font-size:0.78rem;" id="btnRunQwenReport" onclick="runYoloToQwenReport()">
+                    <i class="bi bi-magic"></i> Analyze
+                  </button>
+                </div>
+                <div id="repQwenAnalysisText" class="glass-sub selectable" style="padding:13px; font-size:0.83rem; line-height:1.55; color:#E2E8F0; flex:1; white-space:pre-wrap;">
+                  Click "Analyze" to send your current YOLOv5 telemetry and Day-1 comparison to Qwen3.6-35B for a personalized report.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recorded Images & Videos Media Gallery -->
+          <div class="glass-card" style="padding:22px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
+              <div>
+                <div class="font-display" style="font-size:1.25rem; font-weight:700;">Recorded Images &amp; Videos</div>
+                <div style="font-size:0.80rem; color:var(--text-soft);" id="repMediaSub">Showing recorded posture snapshots and clips for Daily view.</div>
+              </div>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button type="button" class="btn-glass active-filter" id="filterAll" onclick="setMediaFilter('all')">All</button>
+                <button type="button" class="btn-glass" id="filterImage" onclick="setMediaFilter('image')">Images</button>
+                <button type="button" class="btn-glass" id="filterVideo" onclick="setMediaFilter('video')">Videos</button>
+              </div>
+            </div>
+
+            <div id="mediaGalleryGrid" class="media-gallery-grid"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           SECTION 6: SETTINGS (APP VERSION: VER ALPHA, COLOR THEME, BIOFEEDBACK)
+           ===================================================================== -->
+      <section class="app-section" id="sec-settings" data-section="settings">
+        <div class="section-inner">
+          <div class="section-header">
+            <div>
+              <div class="section-kicker">APPLICATION PREFERENCES</div>
+              <h1 class="section-title">Settings</h1>
+              <div class="section-subtitle">Customize appearance, biofeedback alerts, recordings, and view app version info.</div>
+            </div>
+          </div>
+
+          <div class="settings-grid">
+            <!-- App Version & Info Card -->
+            <div class="glass-card" style="padding:22px;">
+              <div class="font-display" style="font-size:1.2rem; font-weight:700; margin-bottom:14px;">
+                <i class="bi bi-info-circle" style="color:var(--accent); margin-right:6px;"></i> About Sandy
+              </div>
+              <div class="setting-row">
+                <div>
+                  <div style="font-weight:600; font-size:0.9rem;">App Version</div>
+                  <div style="font-size:0.78rem; color:var(--text-soft);">First Windows release build</div>
+                </div>
+                <span class="status-pill cyan" id="settingVersionBadge">ver Alpha</span>
+              </div>
+              <div class="setting-row">
+                <div>
+                  <div style="font-weight:600; font-size:0.9rem;">Runtime</div>
+                  <div style="font-size:0.78rem; color:var(--text-soft);" id="settingRuntimeInfo">Windows Desktop (Electron)</div>
+                </div>
+                <span class="font-mono" style="font-size:0.76rem; color:var(--text-soft);">v0.1.0-alpha</span>
+              </div>
+              <div class="setting-row">
+                <div>
+                  <div style="font-weight:600; font-size:0.9rem;">App Tutorial</div>
+                  <div style="font-size:0.78rem; color:var(--text-soft);">Re-watch the walkthrough of all mechanics</div>
+                </div>
+                <button type="button" class="btn-glass" style="padding:7px 13px; font-size:0.8rem;" onclick="openTutorialModal(0)">Replay</button>
+              </div>
+            </div>
+
+            <!-- Color Theme Card -->
+            <div class="glass-card" style="padding:22px;">
+              <div class="font-display" style="font-size:1.2rem; font-weight:700; margin-bottom:14px;">
+                <i class="bi bi-palette-fill" style="color:var(--accent); margin-right:6px;"></i> Color Theme &amp; Layout
+              </div>
+              <div class="theme-swatches" style="margin-bottom:16px;">
+                <button type="button" class="theme-swatch active" data-theme-choice="cyan" onclick="applyTheme('cyan')">
+                  <span class="swatch-dot" style="background:#00F0FF; box-shadow:0 0 10px #00F0FF;"></span>
+                  <span>Cyber Cyan</span>
+                </button>
+                <button type="button" class="theme-swatch" data-theme-choice="magenta" onclick="applyTheme('magenta')">
+                  <span class="swatch-dot" style="background:#FF007F; box-shadow:0 0 10px #FF007F;"></span>
+                  <span>Neon Magenta</span>
+                </button>
+                <button type="button" class="theme-swatch" data-theme-choice="gold" onclick="applyTheme('gold')">
+                  <span class="swatch-dot" style="background:#FFE600; box-shadow:0 0 10px #FFE600;"></span>
+                  <span>Solar Gold</span>
+                </button>
+                <button type="button" class="theme-swatch" data-theme-choice="emerald" onclick="applyTheme('emerald')">
+                  <span class="swatch-dot" style="background:#00FF9D; box-shadow:0 0 10px #00FF9D;"></span>
+                  <span>Emerald Pulse</span>
+                </button>
+              </div>
+
+              <div class="setting-row">
+                <div>
+                  <div style="font-weight:600; font-size:0.88rem;">Animated Background Particles</div>
+                  <div style="font-size:0.76rem; color:var(--text-soft);">Disable to reduce GPU usage on laptops</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="setParticles" checked onchange="saveAppSettings()" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
+              <div class="setting-row">
+                <div>
+                  <div style="font-weight:600; font-size:0.88rem;">Layout Density</div>
+                </div>
+                <select id="setDensity" class="sandy-select" style="width:140px; height:36px;" onchange="saveAppSettings()">
+                  <option value="standard">Standard</option>
+                  <option value="compact">Compact</option>
+                  <option value="wide">Wide</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Biofeedback, Recording & Colab Automation Card -->
+            <div class="glass-card" style="padding:22px;">
+              <div class="font-display" style="font-size:1.2rem; font-weight:700; margin-bottom:14px;">
+                <i class="bi bi-sliders" style="color:var(--accent); margin-right:6px;"></i> Detection, Recording &amp; Colab
+              </div>
+              <div class="setting-row">
+                <div>
+                  <div style="font-weight:600; font-size:0.88rem;">740 Hz Slouch Chime Alert</div>
+                  <div style="font-size:0.76rem; color:var(--text-soft);">Play gentle chime after sustained bad posture</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="setChime" checked onchange="saveAppSettings()" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="setting-row">
+                <div>
+                  <div style="font-weight:600; font-size:0.88rem;">Auto-Record Images &amp; Video Clips</div>
+                  <div style="font-size:0.76rem; color:var(--text-soft);">Save posture snapshots &amp; clips automatically for Reports</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="setAutoRecord" checked onchange="saveAppSettings()" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="setting-row">
+                <div>
+                  <div style="font-weight:600; font-size:0.88rem;">Auto-Wake Colab YOLOv5 &amp; Qwen</div>
+                  <div style="font-size:0.76rem; color:var(--text-soft);">Automatically wake GPU backend when opening Interface or Chat</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="setAutoWake" checked onchange="saveAppSettings()" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="setting-row">
+                <div>
+                  <div style="font-weight:600; font-size:0.88rem;">Slouch Alert Delay</div>
+                  <div style="font-size:0.76rem; color:var(--text-soft);">Seconds before triggering slouch alert</div>
+                </div>
+                <select id="setSlouchSec" class="sandy-select" style="width:110px; height:36px;" onchange="saveAppSettings()">
+                  <option value="3">3 sec</option>
+                  <option value="5" selected>5 sec</option>
+                  <option value="8">8 sec</option>
+                  <option value="12">12 sec</option>
+                </select>
+              </div>
+              <div class="setting-row">
+                <div>
+                  <div style="font-weight:600; font-size:0.88rem;">Recorded Media Folder</div>
+                  <div style="font-size:0.76rem; color:var(--text-soft);">Open local folder containing saved images &amp; videos</div>
+                </div>
+                <button type="button" class="btn-glass" style="padding:7px 13px; font-size:0.8rem;" onclick="openRecordingsFolder()">Open Folder</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: INTERACTIVE POST-SIGNUP APP TUTORIAL
+       ========================================================================= -->
+  <div id="modalTutorial" class="modal-backdrop hidden">
+    <div class="glass-card modal-box" style="max-width:580px; text-align:center;">
+      <div class="font-mono" style="font-size:0.74rem; color:var(--accent); margin-bottom:8px;" id="tutStepCounter">TUTORIAL 1 OF 7</div>
+      <div class="menu-tile-icon" style="width:68px; height:68px; margin:0 auto 16px; font-size:2rem; border-radius:20px;" id="tutIconWrap">
+        <i class="bi bi-stars"></i>
+      </div>
+      <h2 class="font-display" style="font-size:1.85rem; margin-bottom:10px;" id="tutTitle">Welcome to Sandy</h2>
+      <p style="font-size:0.90rem; color:#CBD5E1; line-height:1.6; max-width:460px; margin:0 auto;" id="tutBody"></p>
+
+      <div class="tutorial-step-dots" id="tutDots"></div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+        <button type="button" class="btn-glass" id="btnTutPrev" onclick="stepTutorial(-1)">Back</button>
+        <button type="button" class="btn-glass" style="font-size:0.8rem;" onclick="closeTutorialModal()">Skip Tutorial</button>
+        <button type="button" class="btn-primary-neon" id="btnTutNext" onclick="stepTutorial(1)">Next <i class="bi bi-arrow-right"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: USER PROFILE (OPENED FROM TOP-RIGHT PFP DROPDOWN)
+       ========================================================================= -->
+  <div id="modalProfile" class="modal-backdrop hidden">
+    <div class="glass-card modal-box">
+      <div class="modal-header">
+        <h3 class="font-display" style="font-size:1.5rem;">User Profile</h3>
+        <button type="button" class="btn-glass" style="padding:6px 10px;" onclick="closeModal('modalProfile')"><i class="bi bi-x-lg"></i></button>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:16px; margin-bottom:18px;">
+        <div class="sandy-pfp-btn" style="width:72px; height:72px; font-size:1.6rem;" onclick="document.getElementById('profPfpFile').click()" title="Click to change photo">
+          <span id="profModalAvatar">S</span>
+        </div>
+        <input id="profPfpFile" type="file" accept="image/*" class="hidden" onchange="handleProfilePhotoUpload(event)" />
+        <div>
+          <div style="font-weight:700; font-size:1.15rem;" id="profModalName">Sandy User</div>
+          <div class="font-mono" style="font-size:0.8rem; color:var(--accent);" id="profModalHandle">@sandy_user</div>
+          <div style="font-size:0.75rem; color:var(--text-soft); margin-top:4px;">Click avatar to upload profile photo (saved in Firestore)</div>
+        </div>
+      </div>
+
+      <form onsubmit="saveUserProfileChanges(event)" style="display:flex; flex-direction:column; gap:12px;">
+        <div class="form-grid-2">
+          <div class="form-field">
+            <label for="profDisplayName">Display Name</label>
+            <input id="profDisplayName" type="text" class="sandy-input" required />
+          </div>
+          <div class="form-field">
+            <label for="profUsername">Username</label>
+            <input id="profUsername" type="text" class="sandy-input" required />
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-field">
+            <label for="profEmail">Email</label>
+            <input id="profEmail" type="email" class="sandy-input" readonly style="opacity:0.75;" />
+          </div>
+          <div class="form-field">
+            <label for="profGender">Gender</label>
+            <select id="profGender" class="sandy-select">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Non-binary">Non-binary</option>
+              <option value="Prefer not to say">Prefer not to say</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-field">
+            <label for="profDob">Date of Birth</label>
+            <input id="profDob" type="text" class="sandy-input" placeholder="YYYY-MM-DD" />
+          </div>
+          <div class="form-field">
+            <label for="profGoal">Primary Goal</label>
+            <select id="profGoal" class="sandy-select">
+              <option value="Relieve Neck & Back Pain">Relieve Neck &amp; Back Pain</option>
+              <option value="Build Upright Sitting Habit">Build Upright Sitting Habit</option>
+              <option value="Improve Focus & Ergonomics">Improve Focus &amp; Ergonomics</option>
+              <option value="Gentle Posture Recovery">Gentle Posture Recovery</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="profMedical">Medical Background / Notes</label>
+          <textarea id="profMedical" class="sandy-textarea" rows="2"></textarea>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:6px;">
+          <button type="button" class="btn-glass" onclick="closeModal('modalProfile')">Cancel</button>
+          <button type="submit" class="btn-primary-neon"><i class="bi bi-check2"></i> Save Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: ADD DEVICE (BLUETOOTH SCAN + ESP32 PAIRING)
+       ========================================================================= -->
+  <div id="modalAddDevice" class="modal-backdrop hidden">
+    <div class="glass-card modal-box">
+      <div class="modal-header">
+        <h3 class="font-display" style="font-size:1.5rem;"><i class="bi bi-bluetooth" style="color:var(--neon-red); margin-right:6px;"></i> Add Posture Device</h3>
+        <button type="button" class="btn-glass" style="padding:6px 10px;" onclick="closeModal('modalAddDevice')"><i class="bi bi-x-lg"></i></button>
+      </div>
+
+      <p style="font-size:0.84rem; color:var(--text-soft); margin-bottom:14px;">
+        Scan for nearby Bluetooth <strong>Sandy / PostureAI ESP32-S3</strong> hardware, or register your paired Bluetooth sensor manually below.
+      </p>
+
+      <button type="button" class="btn-red-neon" style="width:100%; margin-bottom:14px;" onclick="scanBluetoothDevices()">
+        <i class="bi bi-broadcast"></i> Scan Nearby Bluetooth Devices
+      </button>
+
+      <div id="bleScanResults" class="glass-sub hidden" style="padding:12px; margin-bottom:14px;"></div>
+
+      <div class="auth-divider">OR REGISTER DEVICE MANUALLY</div>
+
+      <form onsubmit="handleManualAddDevice(event)" style="display:flex; flex-direction:column; gap:11px;">
+        <div class="form-field">
+          <label for="addDevName">Device Name <span class="req-star">*</span></label>
+          <input id="addDevName" type="text" class="sandy-input" placeholder="e.g., Desk PostureAI S3" required />
+        </div>
+        <div class="form-grid-2">
+          <div class="form-field">
+            <label for="addDevModel">Model Type</label>
+            <input id="addDevModel" type="text" class="sandy-input" value="ESP32-S3-WROOM-1-N16R8" />
+          </div>
+          <div class="form-field">
+            <label for="addDevMade">Date Made</label>
+            <input id="addDevMade" type="text" class="sandy-input" value="2026-10" placeholder="YYYY-MM" />
+          </div>
+        </div>
+        <div class="form-field">
+          <label for="addDevStream">Optional Camera Stream URL (ESP32 Wi-Fi / Leave blank for PC Camera)</label>
+          <input id="addDevStream" type="text" class="sandy-input" placeholder="http://192.168.4.1/capture" />
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:6px;">
+          <button type="button" class="btn-glass" onclick="closeModal('modalAddDevice')">Cancel</button>
+          <button type="submit" class="btn-primary-neon"><i class="bi bi-link-45deg"></i> Pair &amp; Add Device</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: HOW TO ADD DEVICE GUIDE
+       ========================================================================= -->
+  <div id="modalHowToAdd" class="modal-backdrop hidden">
+    <div class="glass-card modal-box">
+      <div class="modal-header">
+        <h3 class="font-display" style="font-size:1.5rem;">How to Add a Device</h3>
+        <button type="button" class="btn-glass" style="padding:6px 10px;" onclick="closeModal('modalHowToAdd')"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px; font-size:0.86rem; color:#CBD5E1; line-height:1.55;">
+        <div class="glass-sub" style="padding:13px;">
+          <strong style="color:var(--accent);">1. Power On Your Sensor</strong><br/>
+          Plug in your Sandy / PostureAI ESP32-S3 module via USB-C. Wait until the status LED blinks cyan (BLE Pairing Mode).
+        </div>
+        <div class="glass-sub" style="padding:13px;">
+          <strong style="color:var(--accent);">2. Turn On Windows Bluetooth</strong><br/>
+          Ensure Bluetooth is enabled in Windows Settings so Sandy can discover <code>PostureAI</code> or <code>Sandy</code> beacons.
+        </div>
+        <div class="glass-sub" style="padding:13px;">
+          <strong style="color:var(--accent);">3. Click the Red "Add Device" Button</strong><br/>
+          Hit <strong>Scan Nearby Bluetooth Devices</strong> and select your sensor. Once status shows <strong>Connected</strong>, it automatically appears inside the <strong>Choose device</strong> dropdown on the Interface tab!
+        </div>
+        <div class="glass-sub" style="padding:13px;">
+          <strong style="color:var(--accent);">4. Manage Anytime via the Top-Left (⋮) Menu</strong><br/>
+          Click the three-dot menu on the top-left of any device bar to view detailed hardware <strong>Preferences</strong> (model type, manufacture date, firmware), <strong>Rename</strong>, or <strong>Delete</strong> it.
+        </div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+        <button type="button" class="btn-primary-neon" onclick="closeModal('modalHowToAdd')">Got It</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: DEVICE PREFERENCES (DETAILED MODEL INFO)
+       ========================================================================= -->
+  <div id="modalDevicePrefs" class="modal-backdrop hidden">
+    <div class="glass-card modal-box">
+      <div class="modal-header">
+        <h3 class="font-display" style="font-size:1.5rem;">Device Preferences</h3>
+        <button type="button" class="btn-glass" style="padding:6px 10px;" onclick="closeModal('modalDevicePrefs')"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div id="devicePrefsBody" style="display:flex; flex-direction:column; gap:10px;"></div>
+      <div style="display:flex; justify-content:flex-end; margin-top:18px;">
+        <button type="button" class="btn-primary-neon" onclick="closeModal('modalDevicePrefs')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: RENAME DEVICE
+       ========================================================================= -->
+  <div id="modalRenameDevice" class="modal-backdrop hidden">
+    <div class="glass-card modal-box" style="max-width:420px;">
+      <div class="modal-header">
+        <h3 class="font-display" style="font-size:1.4rem;">Rename Device</h3>
+        <button type="button" class="btn-glass" style="padding:6px 10px;" onclick="closeModal('modalRenameDevice')"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <form onsubmit="submitRenameDevice(event)" style="display:flex; flex-direction:column; gap:14px;">
+        <input type="hidden" id="renameDevId" />
+        <div class="form-field">
+          <label for="renameDevInput">New Device Name</label>
+          <input id="renameDevInput" type="text" class="sandy-input" required />
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn-glass" onclick="closeModal('modalRenameDevice')">Cancel</button>
+          <button type="submit" class="btn-primary-neon">Save Name</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: RECORDED MEDIA LIGHTBOX (IMAGE / VIDEO VIEWER)
+       ========================================================================= -->
+  <div id="modalMediaLightbox" class="modal-backdrop hidden">
+    <div class="glass-card modal-box wide">
+      <div class="modal-header">
+        <h3 class="font-display" style="font-size:1.35rem;" id="lightboxTitle">Recorded Posture Media</h3>
+        <button type="button" class="btn-glass" style="padding:6px 10px;" onclick="closeMediaLightbox()"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div id="lightboxMediaWrap" style="border-radius:14px; overflow:hidden; background:#03060f; text-align:center;"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; flex-wrap:wrap; gap:10px;">
+        <div class="font-mono" style="font-size:0.78rem; color:var(--text-soft);" id="lightboxMeta"></div>
+        <button type="button" class="btn-red-neon" style="padding:7px 14px; font-size:0.8rem;" id="btnLightboxDelete">
+          <i class="bi bi-trash3"></i> Delete Recording
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs (Compat — matching Sandy Website) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="app-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

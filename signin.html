@@ -365,6 +365,24 @@
       if (gBtn) gBtn.disabled = isLoading;
     }
 
+    function redirectAfterDesktopOrWeb(user) {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const cb = params.get('desktop_callback');
+        if (cb && /^http:\/\/127\.0\.0\.1:\d+\/auth-callback$/i.test(cb) && user) {
+          const qs = new URLSearchParams({
+            uid: user.uid || '',
+            email: user.email || '',
+            displayName: user.displayName || '',
+            photoURL: user.photoURL || ''
+          });
+          window.location.href = `${cb}?${qs.toString()}`;
+          return;
+        }
+      } catch (_) {}
+      window.location.href = nextDestination;
+    }
+
     async function handleSignInSubmit(e) {
       e.preventDefault();
       if (!fbAuth) {
@@ -385,8 +403,8 @@
       manualAuthAction = true;
 
       try {
-        await fbAuth.signInWithEmailAndPassword(email, password);
-        window.location.href = nextDestination;
+        const cred = await fbAuth.signInWithEmailAndPassword(email, password);
+        redirectAfterDesktopOrWeb(cred.user);
       } catch (err) {
         console.error('Sign in error:', err);
         manualAuthAction = false;
@@ -416,7 +434,7 @@
             }, { merge: true });
           } catch (_) {}
         }
-        window.location.href = nextDestination;
+        redirectAfterDesktopOrWeb(cred.user);
       } catch (err) {
         console.error('Google sign in error:', err);
         manualAuthAction = false;

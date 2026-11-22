@@ -637,6 +637,23 @@
         }
       } catch (_) {}
 
+      // Desktop App Firebase Handoff (if opened from Sandy Windows App)
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const cb = params.get('desktop_callback');
+        if (cb && /^http:\/\/127\.0\.0\.1:\d+\/auth-callback$/i.test(cb) && signedUpUser) {
+          const qs = new URLSearchParams({
+            uid: signedUpUser.uid || '',
+            email: signedUpUser.email || '',
+            displayName: signedUpUser.displayName || '',
+            goal: selectedGoal || '',
+            isNewUser: '1'
+          });
+          window.location.href = `${cb}?${qs.toString()}`;
+          return;
+        }
+      } catch (_) {}
+
       // Redirect to Profile (Security tab if unverified so they see Verify button, otherwise Live Monitor)
       if (signedUpUser && !signedUpUser.emailVerified) {
         window.location.href = 'profile.html#security';
