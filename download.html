@@ -173,10 +173,10 @@
               <li><i class="bi bi-check2-circle"></i> Full Sandy Profile, Analyze &amp; AI Coach</li>
             </ul>
             <div class="mt-auto d-grid gap-2">
-              <a href="https://github.com/QUINTEX-productio/sandy.io/releases/latest" target="_blank" rel="noopener" class="btn-neon-primary py-2 text-center text-decoration-none">
+              <a href="https://github.com/QUINTEX-productio/sandy-app/releases/latest/download/Sandy-Setup-Alpha-x64.exe" download class="btn-neon-primary py-2 text-center text-decoration-none">
                 <i class="bi bi-windows me-2"></i>Download for Windows (.exe)
               </a>
-              <span class="text-center text-soft-80 font-mono" style="font-size: 0.70rem;">v1.0.0 &bull; x64 Setup Installer</span>
+              <span class="text-center text-soft-80 font-mono" style="font-size: 0.70rem;">ver Alpha &bull; x64 Setup Installer</span>
             </div>
           </div>
         </div>
@@ -199,10 +199,10 @@
               <li><i class="bi bi-check2-circle"></i> Synced Firebase Profile &amp; Result Analyze</li>
             </ul>
             <div class="mt-auto d-grid gap-2">
-              <a href="https://github.com/QUINTEX-productio/sandy.io/releases/latest" target="_blank" rel="noopener" class="btn-neon-primary py-2 text-center text-decoration-none">
+              <a href="https://github.com/QUINTEX-productio/sandy-app/releases/latest/download/Sandy-Alpha.apk" download class="btn-neon-primary py-2 text-center text-decoration-none">
                 <i class="bi bi-android2 me-2"></i>Download for Android (.apk)
               </a>
-              <span class="text-center text-soft-80 font-mono" style="font-size: 0.70rem;">v1.0.0 &bull; ARM64 / Universal APK</span>
+              <span class="text-center text-soft-80 font-mono" style="font-size: 0.70rem;">ver Alpha &bull; ARM64 / Universal APK</span>
             </div>
           </div>
         </div>
@@ -225,10 +225,10 @@
               <li><i class="bi bi-check2-circle"></i> Identical Sandy Web UI &amp; AI Coach</li>
             </ul>
             <div class="mt-auto d-grid gap-2">
-              <a href="https://github.com/QUINTEX-productio/sandy.io/releases/latest" target="_blank" rel="noopener" class="btn-neon-primary py-2 text-center text-decoration-none">
+              <a href="https://github.com/QUINTEX-productio/sandy-app/releases/latest/download/Sandy-Alpha.AppImage" download class="btn-neon-primary py-2 text-center text-decoration-none">
                 <i class="bi bi-terminal me-2"></i>Download for Linux (.AppImage)
               </a>
-              <span class="text-center text-soft-80 font-mono" style="font-size: 0.70rem;">v1.0.0 &bull; AppImage &amp; Debian (.deb)</span>
+              <span class="text-center text-soft-80 font-mono" style="font-size: 0.70rem;">ver Alpha &bull; AppImage &amp; Debian (.deb)</span>
             </div>
           </div>
         </div>
@@ -293,8 +293,8 @@
       } else if (os === 'windows') {
         badge.innerHTML = '<i class="bi bi-windows"></i><span>DETECTED: WINDOWS</span>';
         title.textContent = 'Download Sandy for Windows';
-        btn.href = 'https://github.com/QUINTEX-productio/sandy.io/releases/latest';
-        btn.target = '_blank';
+        btn.href = 'https://github.com/QUINTEX-productio/sandy-app/releases/latest/download/Sandy-Setup-Alpha-x64.exe';
+        btn.setAttribute('download', 'Sandy-Setup-Alpha-x64.exe');
         icon.className = 'bi bi-windows';
         lbl.textContent = 'Download for Windows (.exe)';
         document.getElementById('card-windows').classList.add('os-recommended');
@@ -302,8 +302,8 @@
       } else if (os === 'android') {
         badge.innerHTML = '<i class="bi bi-android2"></i><span>DETECTED: ANDROID</span>';
         title.textContent = 'Download Sandy for Android';
-        btn.href = 'https://github.com/QUINTEX-productio/sandy.io/releases/latest';
-        btn.target = '_blank';
+        btn.href = 'https://github.com/QUINTEX-productio/sandy-app/releases/latest/download/Sandy-Alpha.apk';
+        btn.setAttribute('download', 'Sandy-Alpha.apk');
         icon.className = 'bi bi-android2';
         lbl.textContent = 'Download for Android (.apk)';
         document.getElementById('card-android').classList.add('os-recommended');
@@ -311,8 +311,8 @@
       } else {
         badge.innerHTML = '<i class="bi bi-ubuntu"></i><span>DETECTED: LINUX</span>';
         title.textContent = 'Download Sandy for Linux';
-        btn.href = 'https://github.com/QUINTEX-productio/sandy.io/releases/latest';
-        btn.target = '_blank';
+        btn.href = 'https://github.com/QUINTEX-productio/sandy-app/releases/latest/download/Sandy-Alpha.AppImage';
+        btn.setAttribute('download', 'Sandy-Alpha.AppImage');
         icon.className = 'bi bi-terminal';
         lbl.textContent = 'Download for Linux (.AppImage)';
         document.getElementById('card-linux').classList.add('os-recommended');

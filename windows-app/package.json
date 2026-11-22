@@ -8,8 +8,8 @@
   "license": "MIT",
   "scripts": {
     "start": "electron .",
-    "build:win": "electron-builder --win",
-    "build:win-portable": "electron-builder --win portable"
+    "build:win": "electron-builder --win nsis",
+    "build:win-all": "electron-builder --win nsis portable"
   },
   "dependencies": {},
   "devDependencies": {
@@ -29,22 +29,23 @@
       "package.json"
     ],
     "win": {
+      "signAndEditExecutable": false,
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
-        },
-        {
-          "target": "portable",
           "arch": ["x64"]
         }
       ]
     },
     "nsis": {
+      "artifactName": "Sandy-Setup-Alpha-x64.exe",
       "oneClick": false,
+      "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "shortcutName": "Sandy",
+      "runAfterFinish": true
     }
   }
 }
