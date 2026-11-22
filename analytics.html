@@ -290,8 +290,8 @@
                   </svg>
                   <div class="score-ring-center">
                     <div class="text-soft-80 font-mono" style="font-size: 0.68rem;" id="currentPeriodLabel">TODAY</div>
-                    <div id="mainScoreValue" class="display-4 fw-bold font-mono rating-good" style="line-height: 1.05;">86</div>
-                    <span id="mainScoreBadge" class="flow-badge flow-badge-good font-mono mt-1" style="font-size: 0.68rem;">GOOD</span>
+                    <div id="mainScoreValue" class="display-4 fw-bold font-mono text-soft-80" style="line-height: 1.05;">--</div>
+                    <span id="mainScoreBadge" class="flow-badge flow-badge-neutral font-mono mt-1" style="font-size: 0.68rem;">NO DATA</span>
                   </div>
                 </div>
               </div>
@@ -303,19 +303,19 @@
                     <div class="score-ring-wrap">
                       <svg class="score-ring-svg" width="84" height="84" viewBox="0 0 84 84">
                         <circle class="score-ring-track" cx="42" cy="42" r="34" stroke-width="8"></circle>
-                        <circle id="prevScoreArc" class="score-ring-progress" cx="42" cy="42" r="34" stroke-width="8" stroke="#FFE600" stroke-dasharray="213.63" stroke-dashoffset="50"></circle>
+                        <circle id="prevScoreArc" class="score-ring-progress" cx="42" cy="42" r="34" stroke-width="8" stroke="#64748B" stroke-dasharray="213.63" stroke-dashoffset="213.63"></circle>
                       </svg>
                       <div class="score-ring-center">
-                        <div id="prevScoreValue" class="fw-bold font-mono fs-5 rating-avg">78</div>
+                        <div id="prevScoreValue" class="fw-bold font-mono fs-5 text-soft-80">--</div>
                       </div>
                     </div>
                     <div>
-                      <div class="text-soft-80 font-mono" style="font-size: 0.70rem;" id="prevPeriodLabel">PREVIOUS (YESTERDAY)</div>
-                      <div class="fw-bold text-hi small" id="comparisonHeadline">+8% Better Than Yesterday</div>
-                      <div class="text-soft-80" style="font-size: 0.74rem;" id="comparisonSubtext">Your spine alignment improved across recent YOLO checks.</div>
+                      <div class="text-soft-80 font-mono" style="font-size: 0.70rem;" id="prevPeriodLabel">DAY 1 / PREVIOUS</div>
+                      <div class="fw-bold text-hi small" id="comparisonHeadline">No recorded sessions yet</div>
+                      <div class="text-soft-80" style="font-size: 0.74rem;" id="comparisonSubtext">Start Live Monitor to log real YOLOv5 posture data.</div>
                     </div>
                   </div>
-                  <span id="deltaBadge" class="flow-badge flow-badge-good font-mono fs-6">+8%</span>
+                  <span id="deltaBadge" class="flow-badge flow-badge-neutral font-mono fs-6">--</span>
                 </div>
 
                 <!-- 3 YOLO Telemetry Metric Tiles -->
@@ -335,7 +335,7 @@
                   <div class="col-4">
                     <div class="glass-subpanel p-2 text-center">
                       <div class="text-soft-80 font-mono" style="font-size: 0.66rem;">YOLO CONF</div>
-                      <div id="metricAvgConf" class="fs-5 fw-bold font-mono text-neon-cyan mt-1">94%</div>
+                      <div id="metricAvgConf" class="fs-5 fw-bold font-mono text-neon-cyan mt-1">--</div>
                     </div>
                   </div>
                 </div>
@@ -429,16 +429,19 @@
     let yoloDailyRecords = {}; // { 'YYYY-MM-DD': { back_score, good_frames, bad_frames, slouch_events, avg_confidence } }
     let currentReportState = {
       timeframe: 'daily',
-      current_score: 86,
-      previous_score: 78,
-      delta: 8,
-      good_frames: 430,
-      bad_frames: 70,
-      slouch_events: 4,
-      avg_confidence: 94
+      current_score: null,
+      previous_score: null,
+      delta: 0,
+      good_frames: 0,
+      bad_frames: 0,
+      slouch_events: 0,
+      avg_confidence: null
     };
 
     function getScoreStyle(score) {
+      if (score === null || typeof score !== 'number' || Number.isNaN(score)) {
+        return { label: 'NO DATA', color: '#64748B', textClass: 'text-soft-80', badgeClass: 'flow-badge-neutral' };
+      }
       if (score >= 80) {
         return { label: 'GOOD', color: '#00FF66', textClass: 'rating-good', badgeClass: 'flow-badge-good' };
       }
@@ -448,145 +451,156 @@
       return { label: 'BAD', color: '#FF2A6D', textClass: 'rating-bad', badgeClass: 'flow-badge-bad' };
     }
 
+    function getRealDayRecord(key) {
+      const rec = yoloDailyRecords[key];
+      if (!rec) return null;
+      const g = Number(rec.good_frames || 0);
+      const b = Number(rec.bad_frames || 0);
+      const total = g + b;
+      if (total <= 0 && typeof rec.back_score !== 'number') return null;
+      return {
+        date: key,
+        back_score: typeof rec.back_score === 'number' ? rec.back_score : Math.round((g / Math.max(1, total)) * 100),
+        good_frames: g,
+        bad_frames: b,
+        slouch_events: Number(rec.slouch_events || 0),
+        avg_confidence: typeof rec.avg_confidence === 'number' ? rec.avg_confidence : null
+      };
+    }
+
+    function getFirstRecordedDay() {
+      const sorted = Object.keys(yoloDailyRecords).sort();
+      for (const k of sorted) {
+        const rec = getRealDayRecord(k);
+        if (rec) return rec;
+      }
+      return null;
+    }
+
+    // 100% REAL DATA ONLY — never invents fake scores or fake frame counts
     function buildReportForTimeframe(tf) {
       const today = new Date();
       const dateKey = (d) => d.toISOString().slice(0, 10);
-      const liveDays = Object.keys(yoloDailyRecords).sort();
-      const hasLive = liveDays.length > 0;
-
-      // Baseline realistic sample fallback blended with real YOLO records so all 4 views are rich
       const todayKey = dateKey(today);
-      const yest = new Date(today); yest.setDate(yest.getDate() - 1);
-      const yestKey = dateKey(yest);
+      const firstDay = getFirstRecordedDay();
 
-      const getDayData = (key, fallbackScore) => {
-        if (yoloDailyRecords[key]) return yoloDailyRecords[key];
-        const good = Math.round(fallbackScore * 5);
-        const bad = Math.round((100 - fallbackScore) * 5);
-        return {
-          back_score: fallbackScore,
-          good_frames: good,
-          bad_frames: bad,
-          slouch_events: Math.max(0, Math.round((100 - fallbackScore) / 6)),
-          avg_confidence: 93
-        };
+      let slots = [];
+      let meta = {
+        heading: 'Daily Back Score Report',
+        curLabel: 'TODAY',
+        prevLabel: firstDay ? `DAY 1 (${firstDay.date})` : 'PREVIOUS / DAY 1',
+        trendTitle: 'Last 7 Days Real Back Score Trend'
       };
 
       if (tf === 'daily') {
-        const cur = getDayData(todayKey, 86);
-        const prev = getDayData(yestKey, 78);
-        const bars = [];
-        const fallbackScores = [72, 64, 81, 49, 76, 78, cur.back_score];
         for (let i = 6; i >= 0; i--) {
           const d = new Date(today);
-          d.setDate(d.getDate() - i);
-          const k = dateKey(d);
-          const dayRec = getDayData(k, fallbackScores[6 - i]);
-          bars.push({
-            label: i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' }),
-            score: dayRec.back_score
-          });
+          d.setDate(today.getDate() - i);
+          slots.push({ label: i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' }), keys: [dateKey(d)] });
         }
-        return {
-          heading: 'Daily Back Score Report',
-          subheading: hasLive ? 'Live YOLOv5 detections: Today vs. Yesterday' : 'Preview & Live YOLO Sync: Today vs. Yesterday',
-          curLabel: 'TODAY',
-          prevLabel: 'PREVIOUS (YESTERDAY)',
-          trendTitle: 'Last 7 Days Back Score Comparison',
-          current: cur.back_score,
-          previous: prev.back_score,
-          good_frames: cur.good_frames,
-          bad_frames: cur.bad_frames,
-          slouch_events: cur.slouch_events,
-          avg_confidence: cur.avg_confidence || 94,
-          bars
-        };
-      }
-
-      if (tf === 'weekly') {
-        const thisWeekScores = [];
-        const lastWeekScores = [];
-        let goodSum = 0, badSum = 0, slouchSum = 0;
-        const bars = [];
-        const sampleThis = [79, 84, 72, 88, 91, 76, 85];
-        const sampleLast = [68, 74, 62, 71, 79, 70, 75];
-
-        for (let i = 6; i >= 0; i--) {
-          const d = new Date(today);
-          d.setDate(d.getDate() - i);
-          const rec = getDayData(dateKey(d), sampleThis[6 - i]);
-          thisWeekScores.push(rec.back_score);
-          goodSum += rec.good_frames;
-          badSum += rec.bad_frames;
-          slouchSum += rec.slouch_events;
-          bars.push({ label: d.toLocaleDateString('en-US', { weekday: 'short' }), score: rec.back_score });
-
-          const dPrev = new Date(today);
-          dPrev.setDate(dPrev.getDate() - (i + 7));
-          lastWeekScores.push(getDayData(dateKey(dPrev), sampleLast[6 - i]).back_score);
-        }
-        const curAvg = Math.round(thisWeekScores.reduce((a, b) => a + b, 0) / thisWeekScores.length);
-        const prevAvg = Math.round(lastWeekScores.reduce((a, b) => a + b, 0) / lastWeekScores.length);
-
-        return {
+      } else if (tf === 'weekly') {
+        meta = {
           heading: 'Weekly Back Score Report',
-          subheading: 'Comparing This Week vs. Last Week average daily back score',
           curLabel: 'THIS WEEK',
-          prevLabel: 'PREVIOUS (LAST WEEK)',
-          trendTitle: 'Weekly Daily Breakdown (7 Days)',
-          current: curAvg,
-          previous: prevAvg,
-          good_frames: goodSum,
-          bad_frames: badSum,
-          slouch_events: slouchSum,
-          avg_confidence: 94,
-          bars
+          prevLabel: firstDay ? `DAY 1 (${firstDay.date})` : 'DAY 1 BASELINE',
+          trendTitle: 'Weekly Day-by-Day Real Breakdown (7 Days)'
         };
-      }
-
-      if (tf === 'monthly') {
-        const todayScore = getDayData(todayKey, 84).back_score;
-        const bars = [
-          { label: 'Week 1', score: 66 },
-          { label: 'Week 2', score: 74 },
-          { label: 'Week 3', score: 82 },
-          { label: 'Week 4', score: todayScore }
-        ];
-        const curAvg = Math.round(bars.reduce((a, b) => a + b.score, 0) / bars.length);
-        return {
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(today);
+          d.setDate(today.getDate() - i);
+          slots.push({ label: d.toLocaleDateString('en-US', { weekday: 'short' }), keys: [dateKey(d)] });
+        }
+      } else if (tf === 'monthly') {
+        meta = {
           heading: 'Monthly Back Score Report',
-          subheading: 'Comparing This Month vs. Last Month average back score',
           curLabel: 'THIS MONTH',
-          prevLabel: 'PREVIOUS (LAST MONTH)',
-          trendTitle: 'Monthly Week-by-Week Progress',
-          current: curAvg,
-          previous: 71,
-          good_frames: 9420,
-          bad_frames: 2480,
-          slouch_events: 48,
-          avg_confidence: 94,
-          bars
+          prevLabel: firstDay ? `DAY 1 (${firstDay.date})` : 'DAY 1 BASELINE',
+          trendTitle: 'Monthly Week-by-Week Real Progress'
         };
+        for (let w = 3; w >= 0; w--) {
+          const keys = [];
+          for (let off = w * 7 + 6; off >= w * 7; off--) {
+            const d = new Date(today);
+            d.setDate(today.getDate() - off);
+            keys.push(dateKey(d));
+          }
+          slots.push({ label: w === 0 ? 'This Wk' : `Week -${w}`, keys });
+        }
+      } else {
+        meta = {
+          heading: 'Annual Back Score Report',
+          curLabel: 'THIS YEAR',
+          prevLabel: firstDay ? `DAY 1 (${firstDay.date})` : 'DAY 1 BASELINE',
+          trendTitle: '12-Month Annual Real Overview'
+        };
+        for (let m = 11; m >= 0; m--) {
+          const d = new Date(today.getFullYear(), today.getMonth() - m, 1);
+          const prefix = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          const keys = Object.keys(yoloDailyRecords).filter(k => k.startsWith(prefix));
+          slots.push({ label: d.toLocaleDateString('en-US', { month: 'short' }), keys });
+        }
       }
 
-      // Annually
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const scores = [52, 58, 63, 69, 74, 78, 80, 77, 83, 86, getDayData(todayKey, 88).back_score, 85];
-      const bars = months.map((m, i) => ({ label: m, score: scores[i] }));
-      const curAvg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+      let goodSum = 0, badSum = 0, slouchSum = 0, confSum = 0, confCount = 0;
+      let loggedSlots = 0;
+      const bars = slots.map(slot => {
+        let sg = 0, sb = 0, ss = 0, hasData = false;
+        slot.keys.forEach(k => {
+          const rec = getRealDayRecord(k);
+          if (rec) {
+            hasData = true;
+            sg += rec.good_frames;
+            sb += rec.bad_frames;
+            ss += rec.slouch_events;
+            if (typeof rec.avg_confidence === 'number') {
+              confSum += rec.avg_confidence;
+              confCount++;
+            }
+          }
+        });
+        if (hasData) loggedSlots++;
+        goodSum += sg;
+        badSum += sb;
+        slouchSum += ss;
+        const tot = sg + sb;
+        return {
+          label: slot.label,
+          score: hasData ? Math.round((sg / Math.max(1, tot)) * 100) : null
+        };
+      });
+
+      let currentScore = null;
+      if (tf === 'daily') {
+        const todayRec = getRealDayRecord(todayKey);
+        currentScore = todayRec ? todayRec.back_score : null;
+        goodSum = todayRec ? todayRec.good_frames : 0;
+        badSum = todayRec ? todayRec.bad_frames : 0;
+        slouchSum = todayRec ? todayRec.slouch_events : 0;
+      } else {
+        const tot = goodSum + badSum;
+        currentScore = tot > 0 ? Math.round((goodSum / tot) * 100) : null;
+      }
+
+      const prevScore = firstDay ? firstDay.back_score : null;
+      const missingSlots = slots.length - loggedSlots;
+      const subheading = loggedSlots === 0
+        ? 'No posture sessions recorded yet — open Live Monitor to collect real YOLOv5 data.'
+        : missingSlots > 0
+          ? `Real YOLOv5 telemetry (${loggedSlots} of ${slots.length} periods logged; ${missingSlots} lacking data).`
+          : `Real YOLOv5 telemetry across all ${slots.length} periods.`;
+
       return {
-        heading: 'Annual Back Score Report',
-        subheading: 'Comparing This Year vs. Last Year monthly back score averages',
-        curLabel: 'THIS YEAR',
-        prevLabel: 'PREVIOUS (LAST YEAR)',
-        trendTitle: '12-Month Annual Back Score Overview',
-        current: curAvg,
-        previous: 64,
-        good_frames: 112400,
-        bad_frames: 34200,
-        slouch_events: 512,
-        avg_confidence: 95,
-        bars
+        ...meta,
+        subheading,
+        current: currentScore,
+        previous: prevScore,
+        good_frames: goodSum,
+        bad_frames: badSum,
+        slouch_events: slouchSum,
+        avg_confidence: confCount > 0 ? Math.round(confSum / confCount) : null,
+        bars,
+        loggedSlots,
+        missingSlots
       };
     }
 
@@ -596,16 +610,19 @@
       document.getElementById('qwenActiveTimeframe').textContent = `Context: ${tf.toUpperCase()}`;
 
       const rep = buildReportForTimeframe(tf);
-      const delta = rep.current - rep.previous;
+      const hasCurrent = typeof rep.current === 'number';
+      const hasPrev = typeof rep.previous === 'number';
+      const delta = (hasCurrent && hasPrev) ? (rep.current - rep.previous) : null;
+
       currentReportState = {
         timeframe: tf,
-        current_score: rep.current,
-        previous_score: rep.previous,
-        delta,
+        current_score: hasCurrent ? rep.current : 0,
+        previous_score: hasPrev ? rep.previous : 0,
+        delta: delta ?? 0,
         good_frames: rep.good_frames,
         bad_frames: rep.bad_frames,
         slouch_events: rep.slouch_events,
-        avg_confidence: rep.avg_confidence
+        avg_confidence: rep.avg_confidence ?? 0
       };
 
       document.getElementById('reportHeading').textContent = rep.heading;
@@ -613,58 +630,76 @@
       document.getElementById('currentPeriodLabel').textContent = rep.curLabel;
       document.getElementById('prevPeriodLabel').textContent = rep.prevLabel;
       document.getElementById('trendChartTitle').textContent = rep.trendTitle;
-      document.getElementById('trendRangeBadge').textContent = `${rep.bars.length} PERIODS`;
+      document.getElementById('trendRangeBadge').textContent = `${rep.loggedSlots} / ${rep.bars.length} LOGGED`;
 
       // Main Score Circle Ring (r = 82, circumference = 515.22)
       const mainStyle = getScoreStyle(rep.current);
       const mainArc = document.getElementById('mainScoreArc');
       const mainCirc = 2 * Math.PI * 82;
       mainArc.style.stroke = mainStyle.color;
-      mainArc.style.strokeDashoffset = mainCirc * (1 - rep.current / 100);
+      mainArc.style.strokeDashoffset = hasCurrent ? mainCirc * (1 - rep.current / 100) : mainCirc;
 
       const mainVal = document.getElementById('mainScoreValue');
-      mainVal.textContent = rep.current;
+      mainVal.textContent = hasCurrent ? rep.current : '--';
       mainVal.className = `display-4 fw-bold font-mono ${mainStyle.textClass}`;
 
       const mainBadge = document.getElementById('mainScoreBadge');
       mainBadge.textContent = mainStyle.label;
       mainBadge.className = `flow-badge ${mainStyle.badgeClass} font-mono mt-1`;
 
-      // Previous Period Mini Circle Ring (r = 34, circumference = 213.63)
+      // Day 1 / Previous Mini Circle Ring (r = 34, circumference = 213.63)
       const prevStyle = getScoreStyle(rep.previous);
       const prevArc = document.getElementById('prevScoreArc');
       const prevCirc = 2 * Math.PI * 34;
       prevArc.style.stroke = prevStyle.color;
-      prevArc.style.strokeDashoffset = prevCirc * (1 - rep.previous / 100);
+      prevArc.style.strokeDashoffset = hasPrev ? prevCirc * (1 - rep.previous / 100) : prevCirc;
 
       const prevVal = document.getElementById('prevScoreValue');
-      prevVal.textContent = rep.previous;
+      prevVal.textContent = hasPrev ? rep.previous : '--';
       prevVal.className = `fw-bold font-mono fs-5 ${prevStyle.textClass}`;
 
       // Delta Comparison Badge
       const deltaBadge = document.getElementById('deltaBadge');
       const compHead = document.getElementById('comparisonHeadline');
-      if (delta > 0) {
+      const compSub = document.getElementById('comparisonSubtext');
+      if (delta === null) {
+        deltaBadge.textContent = '--';
+        deltaBadge.className = 'flow-badge flow-badge-neutral font-mono fs-6';
+        compHead.textContent = 'No recorded sessions yet';
+        compSub.textContent = 'Run Live Monitor to capture real YOLOv5 posture scores.';
+      } else if (delta > 0) {
         deltaBadge.textContent = `+${delta}%`;
         deltaBadge.className = 'flow-badge flow-badge-good font-mono fs-6';
-        compHead.textContent = `+${delta}% Higher Than Previous Period`;
+        compHead.textContent = `+${delta}% Better Than Day 1`;
+        compSub.textContent = 'Your spine alignment improved compared to your first recorded day.';
       } else if (delta < 0) {
         deltaBadge.textContent = `${delta}%`;
         deltaBadge.className = 'flow-badge flow-badge-bad font-mono fs-6';
-        compHead.textContent = `${delta}% Lower Than Previous Period`;
+        compHead.textContent = `${delta}% Lower Than Day 1`;
+        compSub.textContent = 'More slouching detected compared to your first recorded day.';
       } else {
         deltaBadge.textContent = '0%';
         deltaBadge.className = 'flow-badge flow-badge-cyan font-mono fs-6';
-        compHead.textContent = 'Steady Compared to Previous Period';
+        compHead.textContent = 'Same as Day 1 Baseline';
+        compSub.textContent = 'Your posture matches your initial baseline score.';
       }
 
       document.getElementById('metricGoodFrames').textContent = rep.good_frames.toLocaleString();
       document.getElementById('metricSlouchEvents').textContent = rep.slouch_events.toLocaleString();
-      document.getElementById('metricAvgConf').textContent = `${rep.avg_confidence}%`;
+      document.getElementById('metricAvgConf').textContent = rep.avg_confidence !== null ? `${rep.avg_confidence}%` : '--';
 
-      // Render Color-Coded Trend Bars
+      // Render Color-Coded Trend Bars (Dashed empty bars where no data exists)
       const container = document.getElementById('trendChartContainer');
       container.innerHTML = rep.bars.map(item => {
+        if (item.score === null) {
+          return `
+            <div class="trend-col" title="${item.label}: No data recorded">
+              <div class="trend-bar-score" style="color:#64748B;">—</div>
+              <div class="trend-bar" style="height:22%; background:transparent; border:1px dashed rgba(148,163,184,0.45); box-shadow:none;"></div>
+              <div class="trend-bar-label">${item.label}</div>
+            </div>
+          `;
+        }
         const st = getScoreStyle(item.score);
         const hPct = Math.max(10, Math.min(100, item.score));
         return `
@@ -710,7 +745,7 @@
         } catch (_) {}
       }
 
-      // 2. Pull from Firebase Firestore (posture_analytics/{uid}/daily + posture_logs)
+      // 2. Pull from Firebase Firestore (posture_analytics/{uid}/daily)
       if (fbDb && currentUser) {
         try {
           const snap = await fbDb.collection('posture_analytics').doc(currentUser.uid).collection('daily').get();
@@ -723,7 +758,7 @@
 
       badge.innerHTML = syncedCount > 0
         ? `<i class="bi bi-check-circle-fill text-neon-good"></i><span>Live YOLO Data (${syncedCount} days)</span>`
-        : `<i class="bi bi-cpu text-neon-cyan"></i><span>YOLO Sync Ready (Demo Baseline)</span>`;
+        : `<i class="bi bi-cpu text-neon-cyan"></i><span>No Recorded Sessions Yet</span>`;
 
       renderReport(activeTimeframe);
     }
@@ -742,8 +777,13 @@
     // Ask Qwen3.6-35B-A3B-UD-Q4_K_M.gguf about the active report
     async function askQwenAboutReport(questionText) {
       if (!questionText || !questionText.trim()) return;
+      if (!fbAuth || !fbAuth.currentUser) {
+        window.location.href = 'signin.html?next=analytics.html';
+        return;
+      }
+
       appendChatMsg(questionText, true);
-      const thinkingBubble = appendChatMsg('Analyzing your YOLO report with Qwen3.6-35B-A3B...', false);
+      const thinkingBubble = appendChatMsg('Analyzing your real YOLO report with Qwen3.6-35B-A3B...', false);
 
       let profile = {};
       try {
@@ -788,16 +828,11 @@
         } catch (_) {}
       }
 
-      // Offline-safe intelligent fallback if Colab ngrok tunnel is currently asleep
-      const st = getScoreStyle(payload.current_score);
-      const trend = payload.delta >= 0 ? `up +${payload.delta}%` : `down ${payload.delta}%`;
+      // Honest offline notice — never print made-up pre-written AI replies
       thinkingBubble.textContent =
-        `[${payload.timeframe.toUpperCase()} REPORT — ${payload.current_score}/100 (${st.label})]\n\n` +
-        `• Trend: Your average back score is ${trend} compared to the previous period (${payload.previous_score}/100).\n` +
-        `• YOLO Data: ${payload.good_frames} good frames vs ${payload.bad_frames} slouch frames (${payload.slouch_events} alerts).\n` +
-        `• Personalized Advice (${payload.user_goal}): Keep your screen at eye level, relax your shoulders, and take a 1-minute reset break every 45 minutes.\n` +
-        `• Note: Start your Colab server with Qwen3.6-35B-A3B-UD-Q4_K_M.gguf to receive live LLM-generated responses.`;
-      document.getElementById('qwenEngineStatus').textContent = 'Offline Fallback (Start Colab Qwen3.6 server for live LLM)';
+        '⚠️ Sandy AI (Qwen3.6-35B) is currently offline or unreachable.\n' +
+        'Start your Colab Qwen notebook and update qwenApiUrl in firebase-config.js to receive live AI report analysis.';
+      document.getElementById('qwenEngineStatus').textContent = 'Qwen3.6 Offline (Start Colab Notebook)';
     }
 
     function handleCustomQuestion(e) {

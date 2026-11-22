@@ -314,7 +314,7 @@
               <div class="col-md-4">
                 <div class="info-field-box text-center">
                   <div class="text-soft-80 font-mono small">GOOD POSTURE RATE</div>
-                  <div id="statGoodRate" class="fs-2 fw-bold text-neon-good font-mono mt-1">100%</div>
+                  <div id="statGoodRate" class="fs-2 fw-bold text-neon-good font-mono mt-1">--</div>
                 </div>
               </div>
               <div class="col-md-4">
@@ -830,8 +830,7 @@
         snap.forEach(d => logs.push(d.data()));
         document.getElementById('statTotalLogs').textContent = logs.length;
         const goodCount = logs.filter(l => String(l.status || '').includes('GOOD')).length;
-        const rate = logs.length ? Math.round((goodCount / logs.length) * 100) : 100;
-        document.getElementById('statGoodRate').textContent = `${rate}%`;
+        document.getElementById('statGoodRate').textContent = logs.length ? `${Math.round((goodCount / logs.length) * 100)}%` : '--';
 
         const listEl = document.getElementById('statsRecentList');
         if (!logs.length) {

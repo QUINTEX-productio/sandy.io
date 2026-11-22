@@ -205,7 +205,7 @@
             </div>
             <div class="glass-subpanel p-2 px-3 mb-2 d-flex justify-content-between align-items-center">
               <span class="text-soft-80 font-mono" style="font-size: 0.72rem;">TODAY BACK SCORE</span>
-              <strong id="ctxBackScore" class="font-mono text-neon-good">86 / 100</strong>
+              <strong id="ctxBackScore" class="font-mono text-soft-80">-- / 100</strong>
             </div>
             <div class="glass-subpanel p-2 px-3 mb-2">
               <div class="text-soft-80 font-mono" style="font-size: 0.68rem;">PERSONAL GOAL</div>
@@ -302,8 +302,8 @@
 
   <script>
     let chatHistory = []; // [{ role: 'user'|'assistant', content: '...' }]
-    let activeScore = 86;
-    let userGoal = 'Build Upright Sitting Habit';
+    let activeScore = null;
+    let userGoal = 'Not set yet';
     let userMedical = 'None reported';
     let isWaiting = false;
 
@@ -369,6 +369,12 @@
       if (e && e.preventDefault) e.preventDefault();
       if (isWaiting) return;
 
+      // Require authenticated Firebase account before allowing AI Chatbot usage
+      if (typeof firebase === 'undefined' || !firebase.apps.length || !firebase.auth().currentUser) {
+        window.location.href = 'signin.html?next=ai-chat.html';
+        return;
+      }
+
       const input = document.getElementById('chatInput');
       const promptText = input.value.trim();
       if (!promptText) return;
@@ -380,6 +386,17 @@
       addMessageBubble('user', promptText);
       chatHistory.push({ role: 'user', content: promptText });
       const aiBubble = addMessageBubble('assistant', '', true);
+
+      // Enforce strict off-topic refusal before contacting Qwen
+      if (isOffTopicOffline(promptText)) {
+        const refusal =
+          "I'm Sandy AI, and I can only help with posture, ergonomics, your Sandy back score reports, and spine or health-related questions. How can I help with your posture today?";
+        aiBubble.textContent = refusal;
+        chatHistory.push({ role: 'assistant', content: refusal });
+        isWaiting = false;
+        document.getElementById('btnSendChat').disabled = false;
+        return;
+      }
 
       const qwenEndpoint = (
         (window.BACKEND_CONFIG && window.BACKEND_CONFIG.qwenApiUrl) ||
@@ -397,14 +414,14 @@
             },
             body: JSON.stringify({
               messages: chatHistory.slice(-10),
-              current_score: activeScore,
+              current_score: typeof activeScore === 'number' ? activeScore : 0,
               user_goal: userGoal,
               medical_notes: userMedical
             })
           });
           if (resp.ok) {
             const data = await resp.json();
-            const reply = data.answer || 'I am here to help with your posture and spine wellness.';
+            const reply = data.answer || 'No response returned by Qwen3.6-35B.';
             aiBubble.textContent = reply;
             chatHistory.push({ role: 'assistant', content: reply });
             if (data.engine) {
@@ -417,21 +434,15 @@
         } catch (_) {}
       }
 
-      // Offline fallback with strict on-topic guardrail
-      let fallbackReply;
-      if (isOffTopicOffline(promptText)) {
-        fallbackReply =
-          "I'm Sandy AI, and I'm strictly focused on posture, ergonomics, your Sandy back score reports, and spine/medical wellness. " +
-          "Please ask me a posture or health-related question and I'll be glad to help!";
-      } else {
-        fallbackReply =
-          `Based on your current back score (${activeScore}/100) and goal (${userGoal}):\n\n` +
-          `• Keep your ears aligned over your shoulders and your monitor top at eye level.\n` +
-          `• Take a 60-second gentle chin-tuck and chest-opener stretch every 45 minutes.\n` +
-          `• Note: Connect your Qwen3.6-35B Colab notebook URL (qwenApiUrl in firebase-config.js) for live AI responses.`;
-      }
-      aiBubble.textContent = fallbackReply;
-      chatHistory.push({ role: 'assistant', content: fallbackReply });
+      // Honest offline notice — never fabricate pre-written AI replies when Qwen3.6 Colab is offline
+      const offlineMsg =
+        '⚠️ Sandy AI (Qwen3.6-35B) is currently offline or unreachable.\n\n' +
+        'To enable live AI replies:\n' +
+        '1. Start your Colab Qwen3.6-35B notebook and wait for the tunnel URL.\n' +
+        '2. Update qwenApiUrl in firebase-config.js with the active tunnel URL.';
+      document.getElementById('chatEngineTag').textContent = 'Qwen3.6 Offline';
+      aiBubble.textContent = offlineMsg;
+      chatHistory.push({ role: 'assistant', content: offlineMsg });
       isWaiting = false;
       document.getElementById('btnSendChat').disabled = false;
     }
@@ -458,22 +469,21 @@
       loadUserContext();
       resetChat();
 
-      // Auto-wake Qwen3.6-35B on best available GPU as soon as AI Coach opens
-      const qwenEp = ((window.BACKEND_CONFIG && window.BACKEND_CONFIG.qwenApiUrl) || (window.BACKEND_CONFIG && window.BACKEND_CONFIG.colabApiUrl) || '').trim().replace(/\/$/, '');
-      if (qwenEp && !qwenEp.includes('xxxx.ngrok')) {
-        fetch(`${qwenEp}/api/wakeup`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
-          body: JSON.stringify({ service: 'qwen' })
-        }).catch(() => {});
-      }
-
       if (typeof firebase !== 'undefined') {
         if (!firebase.apps.length && window.DEFAULT_FIREBASE_CONFIG) {
           firebase.initializeApp(window.DEFAULT_FIREBASE_CONFIG);
         }
         firebase.auth().onAuthStateChanged(async (user) => {
           if (!user) return;
+          // Auto-wake Qwen3.6-35B only for signed-in accounts
+          const qwenEp = ((window.BACKEND_CONFIG && window.BACKEND_CONFIG.qwenApiUrl) || (window.BACKEND_CONFIG && window.BACKEND_CONFIG.colabApiUrl) || '').trim().replace(/\/$/, '');
+          if (qwenEp && !qwenEp.includes('xxxx.ngrok')) {
+            fetch(`${qwenEp}/api/wakeup`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+              body: JSON.stringify({ service: 'qwen' })
+            }).catch(() => {});
+          }
           try {
             const todayKey = new Date().toISOString().slice(0, 10);
             const doc = await firebase.firestore().collection('posture_analytics').doc(user.uid).collection('daily').doc(todayKey).get();
