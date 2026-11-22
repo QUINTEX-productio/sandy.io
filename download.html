@@ -75,6 +75,76 @@
       color: #00F0FF;
       font-size: 0.88rem;
     }
+
+    /* Download In Progress View */
+    .progress-stage-card {
+      background: linear-gradient(145deg, rgba(10, 15, 30, 0.92), rgba(0, 240, 255, 0.08));
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(0, 240, 255, 0.45);
+      border-radius: 24px;
+      padding: 2.5rem 2rem;
+      max-width: 720px;
+      margin: 0 auto;
+      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.78), 0 0 42px rgba(0, 240, 255, 0.16);
+      text-align: center;
+    }
+    .progress-orb {
+      width: 92px;
+      height: 92px;
+      border-radius: 50%;
+      margin: 0 auto 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.4rem;
+      color: #00F0FF;
+      background: radial-gradient(circle, rgba(0, 240, 255, 0.22), rgba(10, 15, 30, 0.92));
+      border: 2px solid #00F0FF;
+      box-shadow: 0 0 34px rgba(0, 240, 255, 0.42);
+      position: relative;
+      animation: sandyPulseOrb 2s ease-in-out infinite;
+    }
+    @keyframes sandyPulseOrb {
+      0%, 100% { box-shadow: 0 0 20px rgba(0, 240, 255, 0.34); transform: scale(1); }
+      50% { box-shadow: 0 0 42px rgba(0, 240, 255, 0.68); transform: scale(1.04); }
+    }
+    .dl-bar-track {
+      width: 100%;
+      max-width: 440px;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.10);
+      margin: 1.25rem auto;
+      overflow: hidden;
+    }
+    .dl-bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #00F0FF, #00FF66);
+      box-shadow: 0 0 16px rgba(0, 240, 255, 0.6);
+      transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .fallback-box {
+      background: rgba(5, 9, 22, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      padding: 1.2rem 1.4rem;
+      margin-top: 1.5rem;
+    }
+    .retry-link {
+      color: #00F0FF;
+      font-weight: 700;
+      text-decoration: underline;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+    .retry-link:hover {
+      color: #7CF7FF;
+    }
   </style>
 </head>
 <body class="d-flex flex-column min-vh-100" style="background-color: #030508;">
@@ -126,136 +196,203 @@
     </header>
 
     <main class="container pb-5 flex-grow-1">
-      <!-- Auto-Detected OS Hero Banner -->
-      <div class="download-hero-card mb-4">
-        <div class="row align-items-center g-4">
-          <div class="col-lg-8">
-            <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
-              <span class="flow-badge flow-badge-cyan font-mono" id="detectedOsBadge">
-                <i class="bi bi-cpu"></i>
-                <span>DETECTING YOUR DEVICE...</span>
-              </span>
-              <span class="flow-badge flow-badge-neutral font-mono">RELEASE v1.0.0</span>
+
+      <!-- ===================================================================
+           VIEW 1: PLATFORM SELECTOR (HERO + 3 OS CARDS + APPLE WEB BANNER)
+           =================================================================== -->
+      <div id="downloadCatalogView">
+        <!-- Auto-Detected OS Hero Banner -->
+        <div class="download-hero-card mb-4">
+          <div class="row align-items-center g-4">
+            <div class="col-lg-8">
+              <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                <span class="flow-badge flow-badge-cyan font-mono" id="detectedOsBadge">
+                  <i class="bi bi-cpu"></i>
+                  <span>DETECTING YOUR DEVICE...</span>
+                </span>
+                <span class="flow-badge flow-badge-neutral font-mono">VER ALPHA</span>
+              </div>
+              <h1 class="display-6 fw-bold text-hi font-display mb-2" id="downloadHeroTitle">
+                Download Sandy for Your Device
+              </h1>
+              <p class="text-body-88 mb-0" style="max-width: 640px;" id="downloadHeroDesc">
+                Get the native Sandy app for Windows, Android, or Linux with full ESP32-S3 Bluetooth &amp; Wi-Fi support, YOLOv5 posture monitoring, Posture Reports, and Qwen3.6-35B AI Coach.
+              </p>
             </div>
-            <h1 class="display-6 fw-bold text-hi font-display mb-2" id="downloadHeroTitle">
-              Download Sandy for Your Device
-            </h1>
-            <p class="text-body-88 mb-0" style="max-width: 640px;" id="downloadHeroDesc">
-              Get the native Sandy app for Windows, Android, or Linux with full ESP32-S3 Bluetooth &amp; Wi-Fi support, YOLOv5 posture monitoring, Result Analyze, and Qwen3.6-35B AI Coach.
-            </p>
+            <div class="col-lg-4 text-lg-end">
+              <a id="primaryDownloadBtn" href="#platforms" class="btn-neon-primary py-3 px-4 text-decoration-none d-inline-flex align-items-center gap-2 fs-6">
+                <i id="primaryDownloadIcon" class="bi bi-download"></i>
+                <span id="primaryDownloadLabel">Choose Your Platform</span>
+              </a>
+            </div>
           </div>
-          <div class="col-lg-4 text-lg-end">
-            <a id="primaryDownloadBtn" href="#platforms" class="btn-neon-primary py-3 px-4 text-decoration-none d-inline-flex align-items-center gap-2 fs-6">
-              <i id="primaryDownloadIcon" class="bi bi-download"></i>
-              <span id="primaryDownloadLabel">Choose Your Platform</span>
+        </div>
+
+        <!-- 3 Platform Download Cards: Windows, Android, Linux -->
+        <div id="platforms" class="row g-4 mb-4">
+          <!-- 1. WINDOWS -->
+          <div class="col-lg-4">
+            <div class="os-download-card" id="card-windows">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="os-icon-badge" style="background: rgba(0, 240, 255, 0.14); border: 1px solid rgba(0, 240, 255, 0.45); color: #00F0FF;">
+                  <i class="bi bi-windows"></i>
+                </div>
+                <span class="flow-badge flow-badge-cyan font-mono d-none" id="rec-windows">YOUR DEVICE</span>
+              </div>
+              <h3 class="fw-bold text-hi font-display mb-1">Windows</h3>
+              <div class="text-soft-80 font-mono small mb-2">Windows 10 / 11 (64-bit)</div>
+              <ul class="os-spec-list">
+                <li><i class="bi bi-check2-circle"></i> Native Windows installer (<code>.exe</code>)</li>
+                <li><i class="bi bi-check2-circle"></i> Scroll-to-circle sidebar &amp; minimal live view</li>
+                <li><i class="bi bi-check2-circle"></i> Direct Bluetooth BLE, ESP32 &amp; Webcam</li>
+                <li><i class="bi bi-check2-circle"></i> Full Profile, YOLO→Qwen Report &amp; AI Coach</li>
+              </ul>
+              <div class="mt-auto d-grid gap-2">
+                <button type="button" onclick="startSandyDownload('windows')" class="btn-neon-primary py-2 text-center">
+                  <i class="bi bi-windows me-2"></i>Download for Windows (.exe)
+                </button>
+                <span class="text-center text-soft-80 font-mono" style="font-size: 0.70rem;">ver Alpha &bull; x64 Setup Installer (~87 MB)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. ANDROID -->
+          <div class="col-lg-4">
+            <div class="os-download-card" id="card-android">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="os-icon-badge" style="background: rgba(0, 255, 102, 0.14); border: 1px solid rgba(0, 255, 102, 0.45); color: #00FF66;">
+                  <i class="bi bi-android2"></i>
+                </div>
+                <span class="flow-badge flow-badge-good font-mono d-none" id="rec-android">YOUR DEVICE</span>
+              </div>
+              <h3 class="fw-bold text-hi font-display mb-1">Android</h3>
+              <div class="text-soft-80 font-mono small mb-2">Android 8.0+ (APK Package)</div>
+              <ul class="os-spec-list">
+                <li><i class="bi bi-check2-circle"></i> Mobile-minimized native Android app (<code>.apk</code>)</li>
+                <li><i class="bi bi-check2-circle"></i> Left icon rail with animated scroll circle</li>
+                <li><i class="bi bi-check2-circle"></i> Bluetooth BLE pairing &amp; Haptic alerts</li>
+                <li><i class="bi bi-check2-circle"></i> Synced Firebase Profile, Reports &amp; AI Coach</li>
+              </ul>
+              <div class="mt-auto d-grid gap-2">
+                <button type="button" onclick="startSandyDownload('android')" class="btn-neon-primary py-2 text-center">
+                  <i class="bi bi-android2 me-2"></i>Download for Android (.apk)
+                </button>
+                <span class="text-center text-soft-80 font-mono" style="font-size: 0.70rem;">ver Alpha &bull; Universal APK (~12 MB)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. LINUX -->
+          <div class="col-lg-4">
+            <div class="os-download-card" id="card-linux">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="os-icon-badge" style="background: rgba(255, 230, 0, 0.14); border: 1px solid rgba(255, 230, 0, 0.45); color: #FFE600;">
+                  <i class="bi bi-ubuntu"></i>
+                </div>
+                <span class="flow-badge flow-badge-yellow font-mono d-none" id="rec-linux">YOUR DEVICE</span>
+              </div>
+              <h3 class="fw-bold text-hi font-display mb-1">Linux</h3>
+              <div class="text-soft-80 font-mono small mb-2">Ubuntu / Debian / Arch (x64)</div>
+              <ul class="os-spec-list">
+                <li><i class="bi bi-check2-circle"></i> Portable <code>.AppImage</code> &amp; <code>.deb</code> builds</li>
+                <li><i class="bi bi-check2-circle"></i> Identical Sandy Desktop UI &amp; themes</li>
+                <li><i class="bi bi-check2-circle"></i> Full Bluetooth, USB &amp; Wi-Fi ESP32 support</li>
+                <li><i class="bi bi-check2-circle"></i> YOLOv5 Monitor, Reports &amp; Qwen AI Coach</li>
+              </ul>
+              <div class="mt-auto d-grid gap-2">
+                <button type="button" onclick="startSandyDownload('linux')" class="btn-neon-primary py-2 text-center">
+                  <i class="bi bi-terminal me-2"></i>Download for Linux (.AppImage)
+                </button>
+                <span class="text-center text-soft-80 font-mono" style="font-size: 0.70rem;">ver Alpha &bull; AppImage &amp; Debian (.deb)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Apple (macOS / iOS) Web Access Notice -->
+        <div class="glass-card p-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
+          <div class="d-flex align-items-center gap-3">
+            <div class="os-icon-badge mb-0" style="width: 48px; height: 48px; font-size: 1.45rem; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.2); color: #F8FAFC;">
+              <i class="bi bi-apple"></i>
+            </div>
+            <div>
+              <div class="fw-bold text-hi">Using macOS or iOS (iPhone / iPad)?</div>
+              <div class="text-soft-80 small">
+                Apple devices run Sandy directly in Safari or Chrome on the web — no app installation required!
+              </div>
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            <a href="example.html" class="btn-glass-secondary small py-2 px-3 text-decoration-none">
+              <i class="bi bi-activity text-neon-pink me-1"></i>Try Web Demo
+            </a>
+            <a href="Interface.html" class="btn-neon-primary small py-2 px-3 text-decoration-none">
+              <i class="bi bi-globe me-1"></i>Open Web Interface
             </a>
           </div>
         </div>
       </div>
 
-      <!-- 3 Platform Download Cards: Windows, Android, Linux -->
-      <div id="platforms" class="row g-4 mb-4">
-        <!-- 1. WINDOWS -->
-        <div class="col-lg-4">
-          <div class="os-download-card" id="card-windows">
-            <div class="d-flex justify-content-between align-items-start">
-              <div class="os-icon-badge" style="background: rgba(0, 240, 255, 0.14); border: 1px solid rgba(0, 240, 255, 0.45); color: #00F0FF;">
-                <i class="bi bi-windows"></i>
-              </div>
-              <span class="flow-badge flow-badge-cyan font-mono d-none" id="rec-windows">YOUR DEVICE</span>
+      <!-- ===================================================================
+           VIEW 2: DOWNLOAD IN PROGRESS (WITH RETRY LINK & GITHUB FALLBACK)
+           =================================================================== -->
+      <div id="downloadProgressView" class="d-none py-3">
+        <div class="progress-stage-card">
+          <div class="progress-orb" id="progOrbIcon">
+            <i class="bi bi-cloud-arrow-down-fill"></i>
+          </div>
+
+          <span class="flow-badge flow-badge-cyan font-mono mb-2" id="progStatusBadge">
+            <i class="bi bi-arrow-down-circle me-1"></i>DOWNLOAD IN PROGRESS
+          </span>
+
+          <h2 class="display-6 fw-bold text-hi font-display mt-2 mb-1" id="progHeading">
+            Downloading Sandy...
+          </h2>
+          <div class="font-mono text-neon-cyan small mb-2" id="progFilename">
+            Sandy-Setup-Alpha-x64.exe
+          </div>
+          <p class="text-body-88 small mb-0 mx-auto" style="max-width: 520px;" id="progInstallHint">
+            Your browser should begin downloading the installer automatically in a moment.
+          </p>
+
+          <div class="dl-bar-track">
+            <div class="dl-bar-fill" id="progBarFill"></div>
+          </div>
+
+          <!-- Troubleshooting / Retry / GitHub Redirect Box -->
+          <div class="fallback-box">
+            <div class="text-hi fw-semibold small mb-2">
+              <i class="bi bi-exclamation-circle text-neon-cyan me-1"></i>
+              Download didn't start or interrupted?
             </div>
-            <h3 class="fw-bold text-hi font-display mb-1">Windows</h3>
-            <div class="text-soft-80 font-mono small mb-2">Windows 10 / 11 (64-bit)</div>
-            <ul class="os-spec-list">
-              <li><i class="bi bi-check2-circle"></i> Native Windows installer (<code>.exe</code>)</li>
-              <li><i class="bi bi-check2-circle"></i> Always-on-top Mini HUD &amp; System Tray</li>
-              <li><i class="bi bi-check2-circle"></i> Direct USB, Bluetooth BLE &amp; Webcam</li>
-              <li><i class="bi bi-check2-circle"></i> Full Sandy Profile, Analyze &amp; AI Coach</li>
-            </ul>
-            <div class="mt-auto d-grid gap-2">
-              <a href="https://github.com/QUINTEX-productio/sandy-app/releases/latest/download/Sandy-Setup-Alpha-x64.exe" download class="btn-neon-primary py-2 text-center text-decoration-none">
-                <i class="bi bi-windows me-2"></i>Download for Windows (.exe)
+            <p class="text-soft-80 small mb-3">
+              <button type="button" class="retry-link" onclick="retryActiveDownload()">
+                Click here to refresh &amp; restart the download
+              </button>
+              &nbsp;or download directly from our official GitHub repository:
+            </p>
+            <div class="d-flex justify-content-center flex-wrap gap-2">
+              <button type="button" class="btn-neon-primary small py-2 px-3" onclick="retryActiveDownload()">
+                <i class="bi bi-arrow-clockwise me-1"></i>Restart Download
+              </button>
+              <a id="progGithubReleaseLink" href="https://github.com/QUINTEX-productio/Sandy/releases/latest" target="_blank" rel="noopener" class="btn-glass-secondary small py-2 px-3 text-decoration-none">
+                <i class="bi bi-github me-1"></i>Open GitHub Releases
               </a>
-              <span class="text-center text-soft-80 font-mono" style="font-size: 0.70rem;">ver Alpha &bull; x64 Setup Installer</span>
+              <a href="https://github.com/QUINTEX-productio/Sandy" target="_blank" rel="noopener" class="btn-glass-subtle small py-2 px-3 text-decoration-none">
+                <i class="bi bi-box-arrow-up-right me-1"></i>github.com/QUINTEX-productio/Sandy
+              </a>
             </div>
           </div>
-        </div>
 
-        <!-- 2. ANDROID -->
-        <div class="col-lg-4">
-          <div class="os-download-card" id="card-android">
-            <div class="d-flex justify-content-between align-items-start">
-              <div class="os-icon-badge" style="background: rgba(0, 255, 102, 0.14); border: 1px solid rgba(0, 255, 102, 0.45); color: #00FF66;">
-                <i class="bi bi-android2"></i>
-              </div>
-              <span class="flow-badge flow-badge-good font-mono d-none" id="rec-android">YOUR DEVICE</span>
-            </div>
-            <h3 class="fw-bold text-hi font-display mb-1">Android</h3>
-            <div class="text-soft-80 font-mono small mb-2">Android 8.0+ (APK Package)</div>
-            <ul class="os-spec-list">
-              <li><i class="bi bi-check2-circle"></i> Direct native Android app (<code>.apk</code>)</li>
-              <li><i class="bi bi-check2-circle"></i> Picture-in-Picture (PiP) Mini Window</li>
-              <li><i class="bi bi-check2-circle"></i> Bluetooth BLE pairing &amp; Haptic alerts</li>
-              <li><i class="bi bi-check2-circle"></i> Synced Firebase Profile &amp; Result Analyze</li>
-            </ul>
-            <div class="mt-auto d-grid gap-2">
-              <a href="https://github.com/QUINTEX-productio/sandy-app/releases/latest/download/Sandy-Alpha.apk" download class="btn-neon-primary py-2 text-center text-decoration-none">
-                <i class="bi bi-android2 me-2"></i>Download for Android (.apk)
-              </a>
-              <span class="text-center text-soft-80 font-mono" style="font-size: 0.70rem;">ver Alpha &bull; ARM64 / Universal APK</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. LINUX -->
-        <div class="col-lg-4">
-          <div class="os-download-card" id="card-linux">
-            <div class="d-flex justify-content-between align-items-start">
-              <div class="os-icon-badge" style="background: rgba(255, 230, 0, 0.14); border: 1px solid rgba(255, 230, 0, 0.45); color: #FFE600;">
-                <i class="bi bi-ubuntu"></i>
-              </div>
-              <span class="flow-badge flow-badge-yellow font-mono d-none" id="rec-linux">YOUR DEVICE</span>
-            </div>
-            <h3 class="fw-bold text-hi font-display mb-1">Linux</h3>
-            <div class="text-soft-80 font-mono small mb-2">Ubuntu / Debian / Arch (x64)</div>
-            <ul class="os-spec-list">
-              <li><i class="bi bi-check2-circle"></i> Portable <code>.AppImage</code> &amp; <code>.deb</code> builds</li>
-              <li><i class="bi bi-check2-circle"></i> Lightweight floating desktop widget</li>
-              <li><i class="bi bi-check2-circle"></i> Full USB Serial &amp; Wi-Fi ESP32 support</li>
-              <li><i class="bi bi-check2-circle"></i> Identical Sandy Web UI &amp; AI Coach</li>
-            </ul>
-            <div class="mt-auto d-grid gap-2">
-              <a href="https://github.com/QUINTEX-productio/sandy-app/releases/latest/download/Sandy-Alpha.AppImage" download class="btn-neon-primary py-2 text-center text-decoration-none">
-                <i class="bi bi-terminal me-2"></i>Download for Linux (.AppImage)
-              </a>
-              <span class="text-center text-soft-80 font-mono" style="font-size: 0.70rem;">ver Alpha &bull; AppImage &amp; Debian (.deb)</span>
-            </div>
+          <div class="mt-4">
+            <button type="button" class="btn-glass-subtle small py-2 px-3" onclick="backToPlatforms()">
+              <i class="bi bi-arrow-left me-1"></i>Back to All Platforms
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- Apple (macOS / iOS) Web Access Notice -->
-      <div class="glass-card p-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
-        <div class="d-flex align-items-center gap-3">
-          <div class="os-icon-badge mb-0" style="width: 48px; height: 48px; font-size: 1.45rem; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.2); color: #F8FAFC;">
-            <i class="bi bi-apple"></i>
-          </div>
-          <div>
-            <div class="fw-bold text-hi">Using macOS or iOS (iPhone / iPad)?</div>
-            <div class="text-soft-80 small">
-              Apple devices run Sandy directly in Safari or Chrome on the web — no app installation required!
-            </div>
-          </div>
-        </div>
-        <div class="d-flex gap-2">
-          <a href="example.html" class="btn-glass-secondary small py-2 px-3 text-decoration-none">
-            <i class="bi bi-activity text-neon-pink me-1"></i>Try Web Demo
-          </a>
-          <a href="Interface.html" class="btn-neon-primary small py-2 px-3 text-decoration-none">
-            <i class="bi bi-globe me-1"></i>Open Web Interface
-          </a>
-        </div>
-      </div>
     </main>
   </div>
 
@@ -269,6 +406,97 @@
   <script src="sandy-nav.js"></script>
 
   <script>
+    const SANDY_REPO_URL = 'https://github.com/QUINTEX-productio/Sandy';
+    const SANDY_DOWNLOADS = {
+      windows: {
+        title: 'Downloading Sandy for Windows',
+        filename: 'Sandy-Setup-Alpha-x64.exe',
+        icon: 'bi-windows',
+        url: `${SANDY_REPO_URL}/releases/latest/download/Sandy-Setup-Alpha-x64.exe`,
+        hint: 'Once downloaded, double-click Sandy-Setup-Alpha-x64.exe to install. If Windows SmartScreen appears on this Alpha build, click "More info" → "Run anyway".'
+      },
+      android: {
+        title: 'Downloading Sandy for Android',
+        filename: 'Sandy-Alpha.apk',
+        icon: 'bi-android2',
+        url: `${SANDY_REPO_URL}/releases/latest/download/Sandy-Alpha.apk`,
+        hint: 'Open Sandy-Alpha.apk once downloaded, allow "Install unknown apps" if prompted, and grant Bluetooth permissions to pair your sensor.'
+      },
+      linux: {
+        title: 'Downloading Sandy for Linux',
+        filename: 'Sandy-Alpha.AppImage',
+        icon: 'bi-terminal',
+        url: `${SANDY_REPO_URL}/releases/latest/download/Sandy-Alpha.AppImage`,
+        hint: 'Run "chmod +x Sandy-Alpha.AppImage && ./Sandy-Alpha.AppImage" in your terminal after the download finishes.'
+      }
+    };
+
+    let activeDownloadOs = null;
+    let barTimers = [];
+
+    function triggerFileDownload(url, filename) {
+      const a = document.createElement('a');
+      a.href = url;
+      a.setAttribute('download', filename);
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => a.remove(), 1200);
+    }
+
+    function animateDownloadProgressBar() {
+      barTimers.forEach(t => clearTimeout(t));
+      barTimers = [];
+      const bar = document.getElementById('progBarFill');
+      const badge = document.getElementById('progStatusBadge');
+      if (!bar) return;
+
+      bar.style.width = '12%';
+      badge.innerHTML = '<i class="bi bi-arrow-down-circle me-1"></i>DOWNLOAD IN PROGRESS';
+
+      barTimers.push(setTimeout(() => { bar.style.width = '48%'; }, 350));
+      barTimers.push(setTimeout(() => { bar.style.width = '82%'; }, 1100));
+      barTimers.push(setTimeout(() => {
+        bar.style.width = '100%';
+        badge.innerHTML = '<i class="bi bi-check2-circle me-1"></i>DOWNLOAD STARTED — CHECK YOUR BROWSER';
+      }, 2000));
+    }
+
+    function startSandyDownload(osKey) {
+      const cfg = SANDY_DOWNLOADS[osKey] || SANDY_DOWNLOADS.windows;
+      activeDownloadOs = osKey;
+
+      document.getElementById('downloadCatalogView').classList.add('d-none');
+      document.getElementById('downloadProgressView').classList.remove('d-none');
+
+      document.getElementById('progOrbIcon').innerHTML = `<i class="bi ${cfg.icon}"></i>`;
+      document.getElementById('progHeading').textContent = cfg.title;
+      document.getElementById('progFilename').textContent = cfg.filename;
+      document.getElementById('progInstallHint').textContent = cfg.hint;
+      document.getElementById('progGithubReleaseLink').href = `${SANDY_REPO_URL}/releases/latest`;
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      animateDownloadProgressBar();
+
+      // Trigger direct installer download immediately
+      setTimeout(() => {
+        triggerFileDownload(cfg.url, cfg.filename);
+      }, 300);
+    }
+
+    function retryActiveDownload() {
+      if (!activeDownloadOs) return;
+      const cfg = SANDY_DOWNLOADS[activeDownloadOs] || SANDY_DOWNLOADS.windows;
+      animateDownloadProgressBar();
+      // Bust cache query string slightly on retry to force fresh browser request
+      triggerFileDownload(`${cfg.url}?retry=${Date.now()}`, cfg.filename);
+    }
+
+    function backToPlatforms() {
+      document.getElementById('downloadProgressView').classList.add('d-none');
+      document.getElementById('downloadCatalogView').classList.remove('d-none');
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       if (window.PostureMotion && typeof window.PostureMotion.initParticleRodBackground === 'function') {
         window.PostureMotion.initParticleRodBackground();
@@ -293,8 +521,8 @@
       } else if (os === 'windows') {
         badge.innerHTML = '<i class="bi bi-windows"></i><span>DETECTED: WINDOWS</span>';
         title.textContent = 'Download Sandy for Windows';
-        btn.href = 'https://github.com/QUINTEX-productio/sandy-app/releases/latest/download/Sandy-Setup-Alpha-x64.exe';
-        btn.setAttribute('download', 'Sandy-Setup-Alpha-x64.exe');
+        btn.href = '#download-windows';
+        btn.onclick = (e) => { e.preventDefault(); startSandyDownload('windows'); };
         icon.className = 'bi bi-windows';
         lbl.textContent = 'Download for Windows (.exe)';
         document.getElementById('card-windows').classList.add('os-recommended');
@@ -302,8 +530,8 @@
       } else if (os === 'android') {
         badge.innerHTML = '<i class="bi bi-android2"></i><span>DETECTED: ANDROID</span>';
         title.textContent = 'Download Sandy for Android';
-        btn.href = 'https://github.com/QUINTEX-productio/sandy-app/releases/latest/download/Sandy-Alpha.apk';
-        btn.setAttribute('download', 'Sandy-Alpha.apk');
+        btn.href = '#download-android';
+        btn.onclick = (e) => { e.preventDefault(); startSandyDownload('android'); };
         icon.className = 'bi bi-android2';
         lbl.textContent = 'Download for Android (.apk)';
         document.getElementById('card-android').classList.add('os-recommended');
@@ -311,12 +539,19 @@
       } else {
         badge.innerHTML = '<i class="bi bi-ubuntu"></i><span>DETECTED: LINUX</span>';
         title.textContent = 'Download Sandy for Linux';
-        btn.href = 'https://github.com/QUINTEX-productio/sandy-app/releases/latest/download/Sandy-Alpha.AppImage';
-        btn.setAttribute('download', 'Sandy-Alpha.AppImage');
+        btn.href = '#download-linux';
+        btn.onclick = (e) => { e.preventDefault(); startSandyDownload('linux'); };
         icon.className = 'bi bi-terminal';
         lbl.textContent = 'Download for Linux (.AppImage)';
         document.getElementById('card-linux').classList.add('os-recommended');
         document.getElementById('rec-linux').classList.remove('d-none');
+      }
+
+      // Support deep-linking straight into download progress: download.html?os=windows|android|linux
+      const params = new URLSearchParams(window.location.search);
+      const autoOs = (params.get('os') || '').toLowerCase();
+      if (SANDY_DOWNLOADS[autoOs]) {
+        startSandyDownload(autoOs);
       }
     });
   </script>
